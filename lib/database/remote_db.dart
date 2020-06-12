@@ -20,5 +20,12 @@ fetchUsers() async {
   for (var row in results) {
     userDetails.putIfAbsent(row[0], () => row[1]);
   }
-  print(userDetails);
+}
+
+syncTxns() async {
+  var results =
+      await connection.query('SELECT * FROM u936125469_testdb.transactions');
+  for (var row in results) {
+    print(row);
+  }
 }

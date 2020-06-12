@@ -9,4 +9,5 @@ class Transactions extends Table {
   RealColumn get debit => real().nullable()();
   DateTimeColumn get createdDTime =>
       dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isSynced => boolean().withDefault(Constant(false))();
 }

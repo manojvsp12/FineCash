@@ -6,19 +6,19 @@ import 'package:moor_ffi/moor_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
-part 'fine_cash_db.g.dart';
+part 'fine_cash_repo.g.dart';
 
 @UseMoor(tables: [Transactions])
-class FineCashDatabase extends _$FineCashDatabase {
-  static FineCashDatabase _instance;
+class FineCashRepository extends _$FineCashRepository {
+  static FineCashRepository _instance;
 
-  FineCashDatabase() : super(_openConnection());
+  FineCashRepository() : super(_openConnection());
 
-  static FineCashDatabase get instance => _getInstance();
+  static FineCashRepository get instance => _getInstance();
 
   static _getInstance() {
     if (_instance == null) {
-      _instance = new FineCashDatabase();
+      _instance = new FineCashRepository();
     }
     return _instance;
   }

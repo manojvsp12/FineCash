@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:fine_cash/database/remote_db.dart';
+import 'package:fine_cash/utilities/preferences.dart';
 
 String hash(data1, data2) {
   var key = utf8.encode(data1);
@@ -11,4 +13,16 @@ String hash(data1, data2) {
 
   print("HMAC digest as hex string: $digest");
   return digest.toString();
+}
+
+bool authenticate(String username, String pwd) {
+  var userHash = hash(username, pwd);
+  var pwdHash = hash(pwd, username);
+  print(userDetails);
+  if (userDetails.containsKey(userHash) && pwdHash == userDetails[userHash]) {
+    write({"isAuth": true});
+    return true;
+  } else {
+    return false;
+  }
 }

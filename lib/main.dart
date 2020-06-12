@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:fine_cash/database/fine_cash_db.dart';
+import 'package:fine_cash/database/remote_db.dart';
 import 'package:flutter/material.dart';
-import 'package:moor/moor.dart';
+import 'package:provider/provider.dart';
 import 'package:window_size/window_size.dart';
 import './screens/login_screen.dart';
-import 'database/remote_db.dart';
+import 'providers/login_provider.dart';
 import 'utilities/preferences.dart';
 import 'utilities/security.dart';
 
@@ -14,56 +14,68 @@ void main() async {
   Future.delayed(Duration.zero).then((finish) async {
     if (Platform.isWindows) {
       PlatformWindow window = await getWindowInfo();
+      print(window.screen.frame.height);
       setWindowFrame(Rect.fromLTWH(
-          0, 0, window.screen.frame.width, window.screen.frame.height));
+          0, 0, window.screen.frame.width, window.screen.frame.height - 80));
     }
   });
   await loadPreferences();
-  // await connectdb();
-  // await fetchUsers();
-  // FineCashDatabase.instance.addTxn(TransactionsCompanion(accountHead: Value('acct3')));
-  print(await FineCashDatabase.instance.allTxnEntries);
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Login UI',
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (_) => preferences?.containsKey('isAuth') ?? false
-            ? preferences['isAuth'] ? HomeScreen() : LoginScreen(onLogin)
-            : LoginScreen(onLogin),
-        '/loginscreen': (_) => LoginScreen(onLogin),
-        '/homescreen': (_) => HomeScreen(),
-      },
-    );
+    return ChangeNotifierProvider(
+        create: (_) => LoginProvider(),
+        builder: (context, child) {
+          return MaterialApp(
+            title: 'Flutter Login UI',
+            debugShowCheckedModeBanner: false,
+            initialRoute: '/',
+            routes: {
+              '/': (_) => preferences?.containsKey('isAuth') ?? false
+                  ? preferences['isAuth'] ? HomeScreen() : LoginScreen(onLogin)
+                  : LoginScreen(onLogin),
+              '/loginscreen': (_) => LoginScreen(onLogin),
+              '/homescreen': (_) => HomeScreen(),
+            },
+          );
+        });
   }
 }
 
-onLogin(context, username, pwd) {
-  var userHash = hash(username, pwd);
-  var pwdHash = hash(pwd, username);
-  print(userHash);
-  print(userDetails.containsKey(userHash));
-  if (userDetails.containsKey(userHash) && pwdHash == userDetails[userHash]) {
-    write({"isAuth": true});
+onLogin(context, key, username, pwd) async {
+  var auth = Provider.of<LoginProvider>(context, listen: false);
+  auth.isAuth = true;
+  auth.username = username;
+  auth.pwd = pwd;
+  await connectdb();
+  await fetchUsers();
+  auth.message = 'SIGNING IN...';
+  auth.isAuth = authenticate(auth.username, auth.pwd);
+  if (auth.isAuth) {
+    auth.message = 'SYNCING TRANSACTIONS...';
+    await syncTxns();
     Navigator.popAndPushNamed(context, '/homescreen');
+  } else {
+    key.currentState.showSnackBar(SnackBar(
+        backgroundColor: Colors.redAccent,
+        content: Text('Failed to Authenticate')));
   }
 }
 
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+  var auth = Provider.of<LoginProvider>(context, listen: false);
     return KeyedSubtree(
       child: Scaffold(
         body: Center(
             child: RaisedButton(
           onPressed: () {
             write({"isAuth": false});
+            auth.isAuth = false;
             Navigator.popAndPushNamed(context, '/loginscreen');
           },
           child: Text('log out'),

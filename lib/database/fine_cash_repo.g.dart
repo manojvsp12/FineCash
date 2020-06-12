@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'fine_cash_db.dart';
+part of 'fine_cash_repo.dart';
 
 // **************************************************************************
 // MoorGenerator
@@ -15,6 +15,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final double credit;
   final double debit;
   final DateTime createdDTime;
+  final bool isSynced;
   Transaction(
       {@required this.id,
       this.accountHead,
@@ -22,7 +23,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       this.desc,
       this.credit,
       this.debit,
-      @required this.createdDTime});
+      @required this.createdDTime,
+      @required this.isSynced});
   factory Transaction.fromData(Map<String, dynamic> data, GeneratedDatabase db,
       {String prefix}) {
     final effectivePrefix = prefix ?? '';
@@ -30,6 +32,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     final stringType = db.typeSystem.forDartType<String>();
     final doubleType = db.typeSystem.forDartType<double>();
     final dateTimeType = db.typeSystem.forDartType<DateTime>();
+    final boolType = db.typeSystem.forDartType<bool>();
     return Transaction(
       id: intType.mapFromDatabaseResponse(data['${effectivePrefix}id']),
       accountHead: stringType
@@ -43,6 +46,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           doubleType.mapFromDatabaseResponse(data['${effectivePrefix}debit']),
       createdDTime: dateTimeType
           .mapFromDatabaseResponse(data['${effectivePrefix}created_d_time']),
+      isSynced:
+          boolType.mapFromDatabaseResponse(data['${effectivePrefix}is_synced']),
     );
   }
   @override
@@ -69,6 +74,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || createdDTime != null) {
       map['created_d_time'] = Variable<DateTime>(createdDTime);
     }
+    if (!nullToAbsent || isSynced != null) {
+      map['is_synced'] = Variable<bool>(isSynced);
+    }
     return map;
   }
 
@@ -89,6 +97,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       createdDTime: createdDTime == null && nullToAbsent
           ? const Value.absent()
           : Value(createdDTime),
+      isSynced: isSynced == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isSynced),
     );
   }
 
@@ -103,6 +114,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       credit: serializer.fromJson<double>(json['credit']),
       debit: serializer.fromJson<double>(json['debit']),
       createdDTime: serializer.fromJson<DateTime>(json['createdDTime']),
+      isSynced: serializer.fromJson<bool>(json['isSynced']),
     );
   }
   @override
@@ -116,6 +128,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'credit': serializer.toJson<double>(credit),
       'debit': serializer.toJson<double>(debit),
       'createdDTime': serializer.toJson<DateTime>(createdDTime),
+      'isSynced': serializer.toJson<bool>(isSynced),
     };
   }
 
@@ -126,7 +139,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           String desc,
           double credit,
           double debit,
-          DateTime createdDTime}) =>
+          DateTime createdDTime,
+          bool isSynced}) =>
       Transaction(
         id: id ?? this.id,
         accountHead: accountHead ?? this.accountHead,
@@ -135,6 +149,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         credit: credit ?? this.credit,
         debit: debit ?? this.debit,
         createdDTime: createdDTime ?? this.createdDTime,
+        isSynced: isSynced ?? this.isSynced,
       );
   @override
   String toString() {
@@ -145,7 +160,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('desc: $desc, ')
           ..write('credit: $credit, ')
           ..write('debit: $debit, ')
-          ..write('createdDTime: $createdDTime')
+          ..write('createdDTime: $createdDTime, ')
+          ..write('isSynced: $isSynced')
           ..write(')'))
         .toString();
   }
@@ -159,8 +175,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
               subAccountHead.hashCode,
               $mrjc(
                   desc.hashCode,
-                  $mrjc(credit.hashCode,
-                      $mrjc(debit.hashCode, createdDTime.hashCode)))))));
+                  $mrjc(
+                      credit.hashCode,
+                      $mrjc(
+                          debit.hashCode,
+                          $mrjc(
+                              createdDTime.hashCode, isSynced.hashCode))))))));
   @override
   bool operator ==(dynamic other) =>
       identical(this, other) ||
@@ -171,7 +191,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.desc == this.desc &&
           other.credit == this.credit &&
           other.debit == this.debit &&
-          other.createdDTime == this.createdDTime);
+          other.createdDTime == this.createdDTime &&
+          other.isSynced == this.isSynced);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -182,6 +203,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<double> credit;
   final Value<double> debit;
   final Value<DateTime> createdDTime;
+  final Value<bool> isSynced;
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.accountHead = const Value.absent(),
@@ -190,6 +212,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.credit = const Value.absent(),
     this.debit = const Value.absent(),
     this.createdDTime = const Value.absent(),
+    this.isSynced = const Value.absent(),
   });
   TransactionsCompanion.insert({
     this.id = const Value.absent(),
@@ -199,6 +222,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.credit = const Value.absent(),
     this.debit = const Value.absent(),
     this.createdDTime = const Value.absent(),
+    this.isSynced = const Value.absent(),
   });
   static Insertable<Transaction> custom({
     Expression<int> id,
@@ -208,6 +232,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<double> credit,
     Expression<double> debit,
     Expression<DateTime> createdDTime,
+    Expression<bool> isSynced,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -217,6 +242,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (credit != null) 'credit': credit,
       if (debit != null) 'debit': debit,
       if (createdDTime != null) 'created_d_time': createdDTime,
+      if (isSynced != null) 'is_synced': isSynced,
     });
   }
 
@@ -227,7 +253,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       Value<String> desc,
       Value<double> credit,
       Value<double> debit,
-      Value<DateTime> createdDTime}) {
+      Value<DateTime> createdDTime,
+      Value<bool> isSynced}) {
     return TransactionsCompanion(
       id: id ?? this.id,
       accountHead: accountHead ?? this.accountHead,
@@ -236,6 +263,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       credit: credit ?? this.credit,
       debit: debit ?? this.debit,
       createdDTime: createdDTime ?? this.createdDTime,
+      isSynced: isSynced ?? this.isSynced,
     );
   }
 
@@ -262,6 +290,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (createdDTime.present) {
       map['created_d_time'] = Variable<DateTime>(createdDTime.value);
+    }
+    if (isSynced.present) {
+      map['is_synced'] = Variable<bool>(isSynced.value);
     }
     return map;
   }
@@ -356,9 +387,26 @@ class $TransactionsTable extends Transactions
         defaultValue: currentDateAndTime);
   }
 
+  final VerificationMeta _isSyncedMeta = const VerificationMeta('isSynced');
+  GeneratedBoolColumn _isSynced;
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, accountHead, subAccountHead, desc, credit, debit, createdDTime];
+  GeneratedBoolColumn get isSynced => _isSynced ??= _constructIsSynced();
+  GeneratedBoolColumn _constructIsSynced() {
+    return GeneratedBoolColumn('is_synced', $tableName, false,
+        defaultValue: Constant(false));
+  }
+
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        accountHead,
+        subAccountHead,
+        desc,
+        credit,
+        debit,
+        createdDTime,
+        isSynced
+      ];
   @override
   $TransactionsTable get asDslTable => this;
   @override
@@ -403,6 +451,10 @@ class $TransactionsTable extends Transactions
           createdDTime.isAcceptableOrUnknown(
               data['created_d_time'], _createdDTimeMeta));
     }
+    if (data.containsKey('is_synced')) {
+      context.handle(_isSyncedMeta,
+          isSynced.isAcceptableOrUnknown(data['is_synced'], _isSyncedMeta));
+    }
     return context;
   }
 
@@ -420,8 +472,9 @@ class $TransactionsTable extends Transactions
   }
 }
 
-abstract class _$FineCashDatabase extends GeneratedDatabase {
-  _$FineCashDatabase(QueryExecutor e) : super(SqlTypeSystem.defaultInstance, e);
+abstract class _$FineCashRepository extends GeneratedDatabase {
+  _$FineCashRepository(QueryExecutor e)
+      : super(SqlTypeSystem.defaultInstance, e);
   $TransactionsTable _transactions;
   $TransactionsTable get transactions =>
       _transactions ??= $TransactionsTable(this);

@@ -37,6 +37,8 @@ dependencies:
   crypto: ^2.1.5
   moor: ^3.1.0
   moor_ffi: ^0.6.0
+  liquid_progress_indicator: ^0.3.2
+  provider: ^4.1.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
