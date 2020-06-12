@@ -4,7 +4,7 @@ import 'package:fine_cash/database/remote_db.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_size/window_size.dart';
-import './screens/login_screen.dart';
+import './screens/login_page.dart';
 import 'providers/login_provider.dart';
 import 'utilities/preferences.dart';
 import 'utilities/security.dart';
@@ -35,9 +35,9 @@ class MyApp extends StatelessWidget {
             initialRoute: '/',
             routes: {
               '/': (_) => preferences?.containsKey('isAuth') ?? false
-                  ? preferences['isAuth'] ? HomeScreen() : LoginScreen(onLogin)
-                  : LoginScreen(onLogin),
-              '/loginscreen': (_) => LoginScreen(onLogin),
+                  ? preferences['isAuth'] ? HomeScreen() : LoginPage(onLogin)
+                  : LoginPage(onLogin),
+              '/loginscreen': (_) => LoginPage(onLogin),
               '/homescreen': (_) => HomeScreen(),
             },
           );
@@ -47,28 +47,35 @@ class MyApp extends StatelessWidget {
 
 onLogin(context, key, username, pwd) async {
   var auth = Provider.of<LoginProvider>(context, listen: false);
-  auth.isAuth = true;
-  auth.username = username;
-  auth.pwd = pwd;
-  await connectdb();
-  await fetchUsers();
-  auth.message = 'SIGNING IN...';
-  auth.isAuth = authenticate(auth.username, auth.pwd);
-  if (auth.isAuth) {
-    auth.message = 'SYNCING TRANSACTIONS...';
-    await syncTxns();
-    Navigator.popAndPushNamed(context, '/homescreen');
-  } else {
+  try {
+    auth.isAuth = true;
+    auth.username = username;
+    auth.pwd = pwd;
+    await connectdb();
+    await fetchUsers();
+    auth.message = 'SIGNING IN...';
+    auth.isAuth = authenticate(auth.username, auth.pwd);
+    if (auth.isAuth) {
+      auth.message = 'SYNCING TRANSACTIONS...';
+      await syncTxns();
+      Navigator.popAndPushNamed(context, '/homescreen');
+    } else {
+      key.currentState.showSnackBar(SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Failed to Sign in.')));
+    }
+  } catch (e) {
+    auth.isAuth = false;
     key.currentState.showSnackBar(SnackBar(
         backgroundColor: Colors.redAccent,
-        content: Text('Failed to Authenticate')));
+        content: Text('Failed to connect to DB.')));
   }
 }
 
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-  var auth = Provider.of<LoginProvider>(context, listen: false);
+    var auth = Provider.of<LoginProvider>(context, listen: false);
     return KeyedSubtree(
       child: Scaffold(
         body: Center(

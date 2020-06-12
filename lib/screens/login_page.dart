@@ -7,16 +7,16 @@ import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 import 'package:provider/provider.dart';
 import '../utilities/constants.dart';
 
-class LoginScreen extends StatefulWidget {
-  LoginScreen(this.onLogin);
+class LoginPage extends StatefulWidget {
+  LoginPage(this.onLogin);
 
   final Function onLogin;
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginPageState extends State<LoginPage> {
   TextEditingController username = TextEditingController();
   TextEditingController pwd = TextEditingController();
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
