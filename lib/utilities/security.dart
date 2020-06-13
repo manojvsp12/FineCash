@@ -20,7 +20,7 @@ bool authenticate(String username, String pwd) {
   var pwdHash = hash(pwd, username);
   print(userDetails);
   if (userDetails.containsKey(userHash) && pwdHash == userDetails[userHash]) {
-    write({"isAuth": true});
+    write({'username': userHash, "isAuth": true});
     return true;
   } else {
     return false;

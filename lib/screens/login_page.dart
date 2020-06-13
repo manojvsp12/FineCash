@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
       elevation: 5.0,
       onPressed: () =>
           widget.onLogin(context, _scaffoldKey, username.text, pwd.text),
-      padding: EdgeInsets.all(15.0),
+      padding: EdgeInsets.all(12.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30.0),
       ),

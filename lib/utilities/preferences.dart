@@ -5,6 +5,10 @@ import 'package:path_provider/path_provider.dart';
 
 Map<String, dynamic> preferences;
 
+String _user;
+
+String get user => _user ?? '';
+
 Future<String> get _localPath async {
   if (Platform.isWindows) {
     final directories = await getApplicationDocumentsDirectory();
@@ -39,9 +43,12 @@ Future<Map<String, dynamic>> loadPreferences() async {
     final file = await _localFile;
     String contents = await file.readAsString();
     preferences = jsonDecode(contents);
+    _user = preferences['username'];
     return Future.value(preferences);
   } catch (e) {
     write({"isAuth": false});
+    _user = null;
     return loadPreferences();
   }
 }
+

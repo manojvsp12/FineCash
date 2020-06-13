@@ -1,10 +1,15 @@
 import 'dart:io';
 
+import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/database/remote_db.dart';
+import 'package:fine_cash/screens/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:moor/moor.dart';
 import 'package:provider/provider.dart';
 import 'package:window_size/window_size.dart';
 import './screens/login_page.dart';
+import 'constants/constants.dart';
 import 'providers/login_provider.dart';
 import 'utilities/preferences.dart';
 import 'utilities/security.dart';
@@ -35,10 +40,10 @@ class MyApp extends StatelessWidget {
             initialRoute: '/',
             routes: {
               '/': (_) => preferences?.containsKey('isAuth') ?? false
-                  ? preferences['isAuth'] ? HomeScreen() : LoginPage(onLogin)
+                  ? preferences['isAuth'] ? HomePage() : LoginPage(onLogin)
                   : LoginPage(onLogin),
               '/loginscreen': (_) => LoginPage(onLogin),
-              '/homescreen': (_) => HomeScreen(),
+              '/homescreen': (_) => HomePage(),
             },
           );
         });
@@ -46,6 +51,9 @@ class MyApp extends StatelessWidget {
 }
 
 onLogin(context, key, username, pwd) async {
+  // await FineCashRepository.instance.addTxn(
+  //     TransactionsCompanion.insert(accountHead: 'acct8', debit: Value(10)));
+  // print(await FineCashRepository.instance.allTxnEntries);
   var auth = Provider.of<LoginProvider>(context, listen: false);
   try {
     auth.isAuth = true;
@@ -69,25 +77,5 @@ onLogin(context, key, username, pwd) async {
     key.currentState.showSnackBar(SnackBar(
         backgroundColor: Colors.redAccent,
         content: Text('Failed to connect to DB.')));
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var auth = Provider.of<LoginProvider>(context, listen: false);
-    return KeyedSubtree(
-      child: Scaffold(
-        body: Center(
-            child: RaisedButton(
-          onPressed: () {
-            write({"isAuth": false});
-            auth.isAuth = false;
-            Navigator.popAndPushNamed(context, '/loginscreen');
-          },
-          child: Text('log out'),
-        )),
-      ),
-    );
   }
 }

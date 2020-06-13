@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:fine_cash/utilities/preferences.dart';
+
 import '../models/transactions.dart';
 import 'package:moor/moor.dart';
 import 'package:moor_ffi/moor_ffi.dart';
@@ -12,6 +14,12 @@ part 'fine_cash_repo.g.dart';
 class FineCashRepository extends _$FineCashRepository {
   static FineCashRepository _instance;
 
+  Set<String> accountList;
+  Set<String> get getAccountList => accountList;
+
+  static setAccountList(Set<String> accountList) =>
+      FineCashRepository.instance.accountList = accountList;
+
   FineCashRepository() : super(_openConnection());
 
   static FineCashRepository get instance => _getInstance();
@@ -19,8 +27,14 @@ class FineCashRepository extends _$FineCashRepository {
   static _getInstance() {
     if (_instance == null) {
       _instance = new FineCashRepository();
+      // fetchAccounts();
     }
     return _instance;
+  }
+
+  static void fetchAccounts() async {
+    await _instance.allTxnEntries
+        .then((txns) => setAccountList(txns.map((e) => e.accountHead).toSet()));
   }
 
   @override
@@ -32,6 +46,7 @@ class FineCashRepository extends _$FineCashRepository {
 
   Future<List<Transaction>> get allTxnEntries {
     return (select(transactions)
+          ..where((tbl) => tbl.txnOwner.equals(user))
           ..orderBy([(t) => OrderingTerm.desc(t.createdDTime)]))
         .get();
   }
