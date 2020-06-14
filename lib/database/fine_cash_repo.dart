@@ -1,9 +1,8 @@
 import 'dart:io';
 
+import 'package:fine_cash/models/metadatas.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:fine_cash/utilities/preferences.dart';
-import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
 
 import '../models/transactions.dart';
 import 'package:moor/moor.dart';
@@ -13,7 +12,7 @@ import 'package:path/path.dart' as p;
 
 part 'fine_cash_repo.g.dart';
 
-@UseMoor(tables: [Transactions])
+@UseMoor(tables: [Transactions, MetaDatas])
 class FineCashRepository extends _$FineCashRepository {
   TxnProvider txnProvider;
 
@@ -65,6 +64,7 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     // put the database file, called db.sqlite here, into the documents folder
     // for your app.
+    print(await _localPath);
     final file = File(p.join(await _localPath, 'db.sqlite'));
     return VmDatabase(file, logStatements: true);
   });

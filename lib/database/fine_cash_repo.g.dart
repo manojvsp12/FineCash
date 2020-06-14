@@ -519,14 +519,292 @@ class $TransactionsTable extends Transactions
   }
 }
 
+class MetaData extends DataClass implements Insertable<MetaData> {
+  final int id;
+  final String accountHead;
+  final String icon;
+  final String color;
+  MetaData(
+      {@required this.id,
+      @required this.accountHead,
+      @required this.icon,
+      @required this.color});
+  factory MetaData.fromData(Map<String, dynamic> data, GeneratedDatabase db,
+      {String prefix}) {
+    final effectivePrefix = prefix ?? '';
+    final intType = db.typeSystem.forDartType<int>();
+    final stringType = db.typeSystem.forDartType<String>();
+    return MetaData(
+      id: intType.mapFromDatabaseResponse(data['${effectivePrefix}id']),
+      accountHead: stringType
+          .mapFromDatabaseResponse(data['${effectivePrefix}account_head']),
+      icon: stringType.mapFromDatabaseResponse(data['${effectivePrefix}icon']),
+      color:
+          stringType.mapFromDatabaseResponse(data['${effectivePrefix}color']),
+    );
+  }
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || id != null) {
+      map['id'] = Variable<int>(id);
+    }
+    if (!nullToAbsent || accountHead != null) {
+      map['account_head'] = Variable<String>(accountHead);
+    }
+    if (!nullToAbsent || icon != null) {
+      map['icon'] = Variable<String>(icon);
+    }
+    if (!nullToAbsent || color != null) {
+      map['color'] = Variable<String>(color);
+    }
+    return map;
+  }
+
+  MetaDatasCompanion toCompanion(bool nullToAbsent) {
+    return MetaDatasCompanion(
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
+      accountHead: accountHead == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountHead),
+      icon: icon == null && nullToAbsent ? const Value.absent() : Value(icon),
+      color:
+          color == null && nullToAbsent ? const Value.absent() : Value(color),
+    );
+  }
+
+  factory MetaData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer serializer}) {
+    serializer ??= moorRuntimeOptions.defaultSerializer;
+    return MetaData(
+      id: serializer.fromJson<int>(json['id']),
+      accountHead: serializer.fromJson<String>(json['accountHead']),
+      icon: serializer.fromJson<String>(json['icon']),
+      color: serializer.fromJson<String>(json['color']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer serializer}) {
+    serializer ??= moorRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'accountHead': serializer.toJson<String>(accountHead),
+      'icon': serializer.toJson<String>(icon),
+      'color': serializer.toJson<String>(color),
+    };
+  }
+
+  MetaData copyWith({int id, String accountHead, String icon, String color}) =>
+      MetaData(
+        id: id ?? this.id,
+        accountHead: accountHead ?? this.accountHead,
+        icon: icon ?? this.icon,
+        color: color ?? this.color,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('MetaData(')
+          ..write('id: $id, ')
+          ..write('accountHead: $accountHead, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => $mrjf($mrjc(id.hashCode,
+      $mrjc(accountHead.hashCode, $mrjc(icon.hashCode, color.hashCode))));
+  @override
+  bool operator ==(dynamic other) =>
+      identical(this, other) ||
+      (other is MetaData &&
+          other.id == this.id &&
+          other.accountHead == this.accountHead &&
+          other.icon == this.icon &&
+          other.color == this.color);
+}
+
+class MetaDatasCompanion extends UpdateCompanion<MetaData> {
+  final Value<int> id;
+  final Value<String> accountHead;
+  final Value<String> icon;
+  final Value<String> color;
+  const MetaDatasCompanion({
+    this.id = const Value.absent(),
+    this.accountHead = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
+  });
+  MetaDatasCompanion.insert({
+    this.id = const Value.absent(),
+    @required String accountHead,
+    @required String icon,
+    @required String color,
+  })  : accountHead = Value(accountHead),
+        icon = Value(icon),
+        color = Value(color);
+  static Insertable<MetaData> custom({
+    Expression<int> id,
+    Expression<String> accountHead,
+    Expression<String> icon,
+    Expression<String> color,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (accountHead != null) 'account_head': accountHead,
+      if (icon != null) 'icon': icon,
+      if (color != null) 'color': color,
+    });
+  }
+
+  MetaDatasCompanion copyWith(
+      {Value<int> id,
+      Value<String> accountHead,
+      Value<String> icon,
+      Value<String> color}) {
+    return MetaDatasCompanion(
+      id: id ?? this.id,
+      accountHead: accountHead ?? this.accountHead,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (accountHead.present) {
+      map['account_head'] = Variable<String>(accountHead.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(icon.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    return map;
+  }
+}
+
+class $MetaDatasTable extends MetaDatas
+    with TableInfo<$MetaDatasTable, MetaData> {
+  final GeneratedDatabase _db;
+  final String _alias;
+  $MetaDatasTable(this._db, [this._alias]);
+  final VerificationMeta _idMeta = const VerificationMeta('id');
+  GeneratedIntColumn _id;
+  @override
+  GeneratedIntColumn get id => _id ??= _constructId();
+  GeneratedIntColumn _constructId() {
+    return GeneratedIntColumn('id', $tableName, false,
+        hasAutoIncrement: true, declaredAsPrimaryKey: true);
+  }
+
+  final VerificationMeta _accountHeadMeta =
+      const VerificationMeta('accountHead');
+  GeneratedTextColumn _accountHead;
+  @override
+  GeneratedTextColumn get accountHead =>
+      _accountHead ??= _constructAccountHead();
+  GeneratedTextColumn _constructAccountHead() {
+    return GeneratedTextColumn(
+      'account_head',
+      $tableName,
+      false,
+    );
+  }
+
+  final VerificationMeta _iconMeta = const VerificationMeta('icon');
+  GeneratedTextColumn _icon;
+  @override
+  GeneratedTextColumn get icon => _icon ??= _constructIcon();
+  GeneratedTextColumn _constructIcon() {
+    return GeneratedTextColumn(
+      'icon',
+      $tableName,
+      false,
+    );
+  }
+
+  final VerificationMeta _colorMeta = const VerificationMeta('color');
+  GeneratedTextColumn _color;
+  @override
+  GeneratedTextColumn get color => _color ??= _constructColor();
+  GeneratedTextColumn _constructColor() {
+    return GeneratedTextColumn(
+      'color',
+      $tableName,
+      false,
+    );
+  }
+
+  @override
+  List<GeneratedColumn> get $columns => [id, accountHead, icon, color];
+  @override
+  $MetaDatasTable get asDslTable => this;
+  @override
+  String get $tableName => _alias ?? 'meta_datas';
+  @override
+  final String actualTableName = 'meta_datas';
+  @override
+  VerificationContext validateIntegrity(Insertable<MetaData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id'], _idMeta));
+    }
+    if (data.containsKey('account_head')) {
+      context.handle(
+          _accountHeadMeta,
+          accountHead.isAcceptableOrUnknown(
+              data['account_head'], _accountHeadMeta));
+    } else if (isInserting) {
+      context.missing(_accountHeadMeta);
+    }
+    if (data.containsKey('icon')) {
+      context.handle(
+          _iconMeta, icon.isAcceptableOrUnknown(data['icon'], _iconMeta));
+    } else if (isInserting) {
+      context.missing(_iconMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+          _colorMeta, color.isAcceptableOrUnknown(data['color'], _colorMeta));
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MetaData map(Map<String, dynamic> data, {String tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : null;
+    return MetaData.fromData(data, _db, prefix: effectivePrefix);
+  }
+
+  @override
+  $MetaDatasTable createAlias(String alias) {
+    return $MetaDatasTable(_db, alias);
+  }
+}
+
 abstract class _$FineCashRepository extends GeneratedDatabase {
   _$FineCashRepository(QueryExecutor e)
       : super(SqlTypeSystem.defaultInstance, e);
   $TransactionsTable _transactions;
   $TransactionsTable get transactions =>
       _transactions ??= $TransactionsTable(this);
+  $MetaDatasTable _metaDatas;
+  $MetaDatasTable get metaDatas => _metaDatas ??= $MetaDatasTable(this);
   @override
   Iterable<TableInfo> get allTables => allSchemaEntities.whereType<TableInfo>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [transactions];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [transactions, metaDatas];
 }
