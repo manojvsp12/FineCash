@@ -227,6 +227,13 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
           desc: moor.Value(descText.value),
         )));
         emitSuccess(canSubmitAgain: true);
+        accountText.clear();
+        subAccountText.clear();
+        amount.clear();
+        descText.clear();
+        crOrDr.clear();
+        dateAndTime =
+            InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
       }
     } catch (e) {
       emitFailure();
