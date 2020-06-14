@@ -9,6 +9,10 @@ String _user;
 
 String get user => _user ?? '';
 
+set user(String user) {
+  _user = user;
+}
+
 Future<String> get _localPath async {
   if (Platform.isWindows) {
     final directories = await getApplicationDocumentsDirectory();
@@ -51,4 +55,3 @@ Future<Map<String, dynamic>> loadPreferences() async {
     return loadPreferences();
   }
 }
-

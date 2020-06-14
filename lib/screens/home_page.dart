@@ -2,11 +2,15 @@ import 'package:bubble_bottom_bar/bubble_bottom_bar.dart';
 import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/models/account_summary.dart';
+import 'package:fine_cash/providers/txn_provider.dart';
+import 'package:fine_cash/utilities/random_icon.dart';
 import 'package:fine_cash/widgets/account_summary_card.dart';
 import 'package:fine_cash/widgets/process_transaction.dart';
 import 'package:fine_cash/widgets/txn_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:random_color/random_color.dart';
 import 'package:slide_popup_dialog/slide_popup_dialog.dart' as slideDialog;
 
 class HomePage extends StatefulWidget {
@@ -18,12 +22,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   ValueNotifier<int> currentIndex = ValueNotifier(0);
-
+  TxnProvider txnProvider;
+  FineCashRepository repo;
   var titles = ['Accounts', 'Transactions', 'Report', 'Sync'];
-
   @override
   void initState() {
     super.initState();
+    if (txnProvider == null)
+      txnProvider = Provider.of<TxnProvider>(context, listen: false);
+    if (repo == null) repo = FineCashRepository(txnProvider);
   }
 
   void changePage(int index) {
@@ -39,79 +46,91 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: kPrimaryColor,
         body: AccountSummaryPage(currentIndex: index),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-        floatingActionButton: new FloatingActionButton(
-          backgroundColor: Colors.amberAccent,
-          foregroundColor: Colors.black,
-          child: Icon(Icons.add),
-          onPressed: () {
-            slideDialog.showSlideDialog(
-              context: context,
-              child: ProcessTransaction(),
-              barrierColor: Colors.grey,
-              pillColor: Colors.amberAccent,
-              backgroundColor: Colors.white,
-            );
-          },
-        ),
-        bottomNavigationBar: BubbleBottomBar(
-          backgroundColor: Colors.white,
-          opacity: .2,
-          currentIndex: index,
-          onTap: changePage,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          elevation: 8,
-          fabLocation: BubbleBottomBarFabLocation.end,
-          hasNotch: true,
-          hasInk: true,
-          inkColor: Colors.black12,
-          items: <BubbleBottomBarItem>[
-            BubbleBottomBarItem(
-                backgroundColor: Colors.red,
-                icon: Icon(
-                  Icons.dashboard,
-                  color: Colors.black,
-                ),
-                activeIcon: Icon(
-                  Icons.dashboard,
-                  color: Colors.red,
-                ),
-                title: Text(titles[index])),
-            BubbleBottomBarItem(
-                backgroundColor: Colors.deepPurple,
-                icon: Icon(
-                  Icons.menu,
-                  color: Colors.black,
-                ),
-                activeIcon: Icon(
-                  Icons.menu,
-                  color: Colors.deepPurple,
-                ),
-                title: Text(titles[index])),
-            BubbleBottomBarItem(
-                backgroundColor: Colors.indigo,
-                icon: Icon(
-                  Icons.folder_open,
-                  color: Colors.black,
-                ),
-                activeIcon: Icon(
-                  Icons.folder_open,
-                  color: Colors.indigo,
-                ),
-                title: Text(titles[index])),
-            BubbleBottomBarItem(
-                backgroundColor: Colors.green,
-                icon: Icon(
-                  Icons.sync,
-                  color: Colors.black,
-                ),
-                activeIcon: Icon(
-                  Icons.sync,
-                  color: Colors.green,
-                ),
-                title: Text(titles[index]))
-          ],
-        ),
+        floatingActionButton: _buildFloatingActionButton(context),
+        bottomNavigationBar: _buildNavBar(index),
       ),
+    );
+  }
+
+  FloatingActionButton _buildFloatingActionButton(context) {
+    return FloatingActionButton(
+      backgroundColor: Colors.amberAccent,
+      foregroundColor: Colors.black,
+      child: Icon(Icons.add),
+      onPressed: () {
+        slideDialog.showSlideDialog(
+          context: context,
+          child: ProcessTransaction(
+            context: context,
+            repo: repo,
+            txnProvider: txnProvider,
+          ),
+          barrierColor: Colors.grey,
+          pillColor: Colors.amberAccent,
+          backgroundColor: Colors.white,
+        );
+      },
+    );
+  }
+
+  BubbleBottomBar _buildNavBar(int index) {
+    return BubbleBottomBar(
+      backgroundColor: Colors.white,
+      opacity: .2,
+      currentIndex: index,
+      onTap: changePage,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      elevation: 8,
+      fabLocation: BubbleBottomBarFabLocation.end,
+      hasNotch: true,
+      hasInk: true,
+      inkColor: Colors.black12,
+      items: <BubbleBottomBarItem>[
+        BubbleBottomBarItem(
+            backgroundColor: Colors.red,
+            icon: Icon(
+              Icons.dashboard,
+              color: Colors.black,
+            ),
+            activeIcon: Icon(
+              Icons.dashboard,
+              color: Colors.red,
+            ),
+            title: Text(titles[index])),
+        BubbleBottomBarItem(
+            backgroundColor: Colors.deepPurple,
+            icon: Icon(
+              Icons.menu,
+              color: Colors.black,
+            ),
+            activeIcon: Icon(
+              Icons.menu,
+              color: Colors.deepPurple,
+            ),
+            title: Text(titles[index])),
+        BubbleBottomBarItem(
+            backgroundColor: Colors.indigo,
+            icon: Icon(
+              Icons.folder_open,
+              color: Colors.black,
+            ),
+            activeIcon: Icon(
+              Icons.folder_open,
+              color: Colors.indigo,
+            ),
+            title: Text(titles[index])),
+        BubbleBottomBarItem(
+            backgroundColor: Colors.green,
+            icon: Icon(
+              Icons.sync,
+              color: Colors.black,
+            ),
+            activeIcon: Icon(
+              Icons.sync,
+              color: Colors.green,
+            ),
+            title: Text(titles[index]))
+      ],
     );
   }
 
@@ -142,36 +161,32 @@ class _HomePageState extends State<HomePage> {
 
 class AccountSummaryPage extends StatelessWidget {
   final int currentIndex;
-
-  const AccountSummaryPage({Key key, this.currentIndex}) : super(key: key);
+  AccountSummaryPage({Key key, this.currentIndex}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: Column(
-        children: <Widget>[
-          // SearchBox(onChanged: (value) {}),
-          // AccountsList(),
-          SizedBox(height: kDefaultPadding / 2),
-          Expanded(
-            child: Stack(
-              children: <Widget>[
-                Container(
-                  margin: EdgeInsets.only(top: 70),
-                  decoration: BoxDecoration(
-                    color: kBackgroundColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40),
-                    ),
+    return Column(
+      children: <Widget>[
+        // SearchBox(onChanged: (value) {}),
+        // AccountsList(),
+        SizedBox(height: kDefaultPadding / 2),
+        Expanded(
+          child: Stack(
+            children: <Widget>[
+              Container(
+                margin: EdgeInsets.only(top: 70),
+                decoration: BoxDecoration(
+                  color: kBackgroundColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
                 ),
-                _buildAccountDetails(currentIndex, context),
-              ],
-            ),
+              ),
+              _buildAccountDetails(currentIndex, context),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -188,7 +203,7 @@ class AccountSummaryPage extends StatelessWidget {
               press: () {},
             ),
             SizedBox(
-              height: 50,
+              height: 30,
             ),
             _getPageDetails(index, context),
           ],
@@ -201,10 +216,10 @@ class AccountSummaryPage extends StatelessWidget {
 Widget _getPageDetails(index, context) {
   switch (index) {
     case 0:
-      return newActions(context);
+      return _buildAccounts(context);
       break;
     case 1:
-      return _buildTxnDetails();
+      return _buildTxnDetails(context);
       break;
     case 2:
     case 3:
@@ -213,196 +228,73 @@ Widget _getPageDetails(index, context) {
   }
 }
 
-Widget _buildTxnDetails() {
-  return Column(
-    children: [
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
-      TransactionCard(
-        txn: Transaction(
-            accountHead: '',
-            id: 0,
-            createdDTime: DateTime.now(),
-            isSynced: false),
-        press: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => DetailsScreen(
-          //       product: products[index],
-          //     ),
-          //   ),
-          // );
-        },
-      ),
+Widget _buildTxnDetails(context) {
+  TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+  return SizedBox(
+    height: MediaQuery.of(context).size.height * .62,
+    child: txnProvider.allTxns.isEmpty
+        ? Center(
+            child: Text('Press \'+\' to add new Transaction'),
+          )
+        : ListView.builder(
+            padding: EdgeInsets.zero,
+            itemCount: txnProvider.allTxns.length,
+            // itemExtent: 130,
+            // cacheExtent: 1000,
+            // scrollDirection: Axis.vertical,
+            // shrinkWrap: true,
+            physics: ClampingScrollPhysics(),
+            itemBuilder: (context, index) => TransactionCard(
+              txn: txnProvider.allTxns[index],
+              press: () {
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => DetailsScreen(
+                //       product: products[index],
+                //     ),
+                //   ),
+                // );
+              },
+            ),
+          ),
+  );
+}
+
+Widget _buildAccounts(context) {
+  TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+  return Wrap(
+    alignment: WrapAlignment.center,
+    spacing: 20,
+    runSpacing: 30.0,
+    children: <Widget>[
+      if (txnProvider.accountList.isEmpty)
+        Center(
+          child: Text('Press \'+\' to add a new Account'),
+        ),
+      if (txnProvider.accountList.isNotEmpty)
+        ...txnProvider.accountList
+            .map((e) => AccountsCard(
+                  icon: randomIcon,
+                  color: RandomColor().randomColor(),
+                  title: e.toUpperCase(),
+                  onPressed: () {
+                    print('pressed');
+                  },
+                ))
+            .toList(),
     ],
   );
 }
 
-Widget newActions(context) => Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 20,
-      runSpacing: 30.0,
-      children: <Widget>[
-        // ...FineCashRepository.instance.accountList
-        //     .map((e) => ActionCard(
-        //           icon: Icons.schedule,
-        //           color: Colors.red,
-        //           title: e,
-        //           onPressed: () {
-        //             print('pressed');
-        //           },
-        //         ))
-        //     .toList(),
-        ActionCard(
-          icon: Icons.schedule,
-          color: Colors.red,
-          title: 'agenda_text',
-          onPressed: () {
-            print('pressed');
-          },
-        ),
-        ActionCard(
-          icon: Icons.person,
-          color: Colors.green,
-          title: 'speakers_text',
-          // onPressed: () => Navigator.pushNamed(context, SpeakerPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.people,
-          color: Colors.amber,
-          title: 'team_text',
-          // onPressed: () => Navigator.pushNamed(context, TeamPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.attach_money,
-          color: Colors.purple,
-          title: 'sponsor_text',
-          // onPressed: () => Navigator.pushNamed(context, SponsorPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.question_answer,
-          color: Colors.brown,
-          title: 'faq_text',
-          // onPressed: () => Navigator.pushNamed(context, FaqPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.map,
-          color: Colors.blue,
-          title: 'map_text',
-          // onPressed: () => Navigator.pushNamed(context, MapPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.people,
-          color: Colors.amber,
-          title: 'team_text',
-          // onPressed: () => Navigator.pushNamed(context, TeamPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.attach_money,
-          color: Colors.purple,
-          title: 'sponsor_text',
-          // onPressed: () => Navigator.pushNamed(context, SponsorPage.routeName),
-        ),
-        ActionCard(
-          icon: Icons.question_answer,
-          color: Colors.brown,
-          title: 'faq_text',
-          // onPressed: () => Navigator.pushNamed(context, FaqPage.routeName),
-        ),
-      ],
-    );
-
-class ActionCard extends StatelessWidget {
+class AccountsCard extends StatelessWidget {
   final Function onPressed;
   final IconData icon;
   final String title;
   final Color color;
 
-  const ActionCard({Key key, this.onPressed, this.icon, this.title, this.color})
+  const AccountsCard(
+      {Key key, this.onPressed, this.icon, this.title, this.color})
       : super(key: key);
   @override
   Widget build(BuildContext context) {

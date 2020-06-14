@@ -72,7 +72,7 @@ class TransactionCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: kDefaultPadding),
                       child: Text(
-                        'Account',
+                        'Account: ${txn.accountHead}',
                         style: Theme.of(context).textTheme.button,
                       ),
                     ),

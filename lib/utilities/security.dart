@@ -21,6 +21,7 @@ bool authenticate(String username, String pwd) {
   print(userDetails);
   if (userDetails.containsKey(userHash) && pwdHash == userDetails[userHash]) {
     write({'username': userHash, "isAuth": true});
+    user = userHash;
     return true;
   } else {
     return false;

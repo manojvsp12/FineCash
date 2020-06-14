@@ -1,6 +1,9 @@
 import 'dart:io';
 
+import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:fine_cash/utilities/preferences.dart';
+import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
 
 import '../models/transactions.dart';
 import 'package:moor/moor.dart';
@@ -12,36 +15,41 @@ part 'fine_cash_repo.g.dart';
 
 @UseMoor(tables: [Transactions])
 class FineCashRepository extends _$FineCashRepository {
-  static FineCashRepository _instance;
+  TxnProvider txnProvider;
 
-  Set<String> accountList;
-  Set<String> get getAccountList => accountList;
-
-  static setAccountList(Set<String> accountList) =>
-      FineCashRepository.instance.accountList = accountList;
-
-  FineCashRepository() : super(_openConnection());
-
-  static FineCashRepository get instance => _getInstance();
-
-  static _getInstance() {
-    if (_instance == null) {
-      _instance = new FineCashRepository();
-      // fetchAccounts();
-    }
-    return _instance;
+  FineCashRepository(this.txnProvider) : super(_openConnection()) {
+    this.fetchAccounts();
+    this.fetchSubAccounts();
+    this.fetchAllTxns();
   }
 
-  static void fetchAccounts() async {
-    await _instance.allTxnEntries
-        .then((txns) => setAccountList(txns.map((e) => e.accountHead).toSet()));
+  void fetchAccounts() async {
+    List<Transaction> allTxnEntries = await this.allTxnEntries;
+    print(allTxnEntries);
+    txnProvider.setAccountList(allTxnEntries.map((e) => e.accountHead).toSet());
+  }
+
+  void fetchSubAccounts() async {
+    List<Transaction> allTxnEntries = await this.allTxnEntries;
+    txnProvider
+        .setSubAccountList(allTxnEntries.map((e) => e.subAccountHead).toSet());
+  }
+
+  void fetchAllTxns() async {
+    List<Transaction> allTxnEntries = await this.allTxnEntries;
+    txnProvider.setAllTxns(allTxnEntries);
   }
 
   @override
   int get schemaVersion => 1;
 
-  Future<int> addTxn(TransactionsCompanion entry) {
-    return into(transactions).insert(entry);
+  Future<int> addTxn(TransactionsCompanion entry) async {
+    int result =
+        await into(transactions).insert(entry, mode: InsertMode.insertOrFail);
+    this.fetchAccounts();
+    this.fetchSubAccounts();
+    this.fetchAllTxns();
+    return result;
   }
 
   Future<List<Transaction>> get allTxnEntries {
@@ -58,7 +66,7 @@ LazyDatabase _openConnection() {
     // put the database file, called db.sqlite here, into the documents folder
     // for your app.
     final file = File(p.join(await _localPath, 'db.sqlite'));
-    return VmDatabase(file);
+    return VmDatabase(file, logStatements: true);
   });
 }
 

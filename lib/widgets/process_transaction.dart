@@ -1,14 +1,22 @@
+import 'package:fine_cash/database/fine_cash_repo.dart';
+import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
+import 'package:moor/moor.dart' as moor;
+import 'package:line_awesome_icons/line_awesome_icons.dart';
 
 class ProcessTransaction extends StatelessWidget {
-  const ProcessTransaction({Key key}) : super(key: key);
+  final BuildContext context;
+  final FineCashRepository repo;
+  final TxnProvider txnProvider;
+  const ProcessTransaction({Key key, this.context, this.repo, this.txnProvider})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AllFieldsFormBloc(),
+      create: (context) => AllFieldsFormBloc(context, repo, txnProvider),
       child: Builder(
         builder: (context) {
           return Expanded(
@@ -21,7 +29,9 @@ class ProcessTransaction extends StatelessWidget {
                   FloatingActionButton.extended(
                     backgroundColor: Colors.amber,
                     foregroundColor: Colors.black,
-                    onPressed: () {},
+                    onPressed: () {
+                      BlocProvider.of<AllFieldsFormBloc>(context).submit();
+                    },
                     icon: Icon(Icons.send),
                     label: Text('SUBMIT'),
                   ),
@@ -44,14 +54,16 @@ class TransactionForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final formBloc = BlocProvider.of<AllFieldsFormBloc>(ctx);
     return FormBlocListener<AllFieldsFormBloc, String, String>(
-      onSubmitting: (ctx, state) {
-        //TODO update form submission
-        formBloc.close();
+      onSubmitting: (ctx, state) {},
+      onSuccess: (ctx, state) {
+        Scaffold.of(ctx).showSnackBar(SnackBar(
+            backgroundColor: Colors.greenAccent,
+            content: Text('Transaction added successfully.')));
       },
-      onSuccess: (ctx, state) {},
       onFailure: (ctx, state) {
-        Scaffold.of(ctx)
-            .showSnackBar(SnackBar(content: Text(state.failureResponse)));
+        // Scaffold.of(ctx).showSnackBar(SnackBar(
+        //     backgroundColor: Colors.redAccent,
+        //     content: Text('Failed to Sign in.')));
       },
       child: SingleChildScrollView(
         physics: ClampingScrollPhysics(),
@@ -60,35 +72,61 @@ class TransactionForm extends StatelessWidget {
           child: Column(
             children: <Widget>[
               TextFieldBlocBuilder(
+                maxLength: 130,
+                hideOnEmptySuggestions: true,
+                hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
                 clearTextIcon: Icon(Icons.clear),
-                textFieldBloc: formBloc.text1,
+                textFieldBloc: formBloc.accountText,
                 decoration: InputDecoration(
                   labelText: 'Account',
+                  helperText: 'Account Head Name',
                   prefixIcon: Icon(Icons.text_fields),
                 ),
               ),
               TextFieldBlocBuilder(
+                maxLength: 130,
+                hideOnEmptySuggestions: true,
+                hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
                 clearTextIcon: Icon(Icons.clear),
-                textFieldBloc: formBloc.text1,
+                textFieldBloc: formBloc.subAccountText,
                 decoration: InputDecoration(
                   labelText: 'Sub Account',
+                  helperText: 'Sub Account Name',
                   prefixIcon: Icon(Icons.text_fields),
                 ),
               ),
               TextFieldBlocBuilder(
+                keyboardType: TextInputType.number,
+                maxLength: 30,
+                hideOnEmptySuggestions: true,
+                hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
                 clearTextIcon: Icon(Icons.clear),
-                textFieldBloc: formBloc.text1,
+                textFieldBloc: formBloc.amount,
+                decoration: InputDecoration(
+                  labelText: 'Amount',
+                  helperText: 'Amount',
+                  prefixIcon: Icon(LineAwesomeIcons.rupee),
+                ),
+              ),
+              TextFieldBlocBuilder(
+                maxLength: 200,
+                hideOnEmptySuggestions: true,
+                hideOnLoadingSuggestions: true,
+                showSuggestionsWhenIsEmpty: false,
+                clearTextIcon: Icon(Icons.clear),
+                textFieldBloc: formBloc.descText,
                 decoration: InputDecoration(
                   labelText: 'Description',
+                  helperText: 'Description (Optional)',
                   prefixIcon: Icon(Icons.text_fields),
                 ),
               ),
               DateTimeFieldBlocBuilder(
                 clearIcon: Icon(Icons.clear),
-                dateTimeFieldBloc: formBloc.dateAndTime1,
+                dateTimeFieldBloc: formBloc.dateAndTime,
                 canSelectTime: true,
                 format: DateFormat('dd-MM-yyyy  hh:mm'),
                 initialDate: DateTime.now(),
@@ -101,8 +139,10 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               RadioButtonGroupFieldBlocBuilder<String>(
-                selectFieldBloc: formBloc.select2,
+                selectFieldBloc: formBloc.crOrDr,
                 decoration: InputDecoration(
+                  labelText: 'Credit or Debit',
+                  helperText: 'Any one must be selected',
                   prefixIcon: SizedBox(),
                 ),
                 itemBuilder: (ctx, item) => item,
@@ -117,67 +157,77 @@ class TransactionForm extends StatelessWidget {
 }
 
 class AllFieldsFormBloc extends FormBloc<String, String> {
-  final text1 = TextFieldBloc(
-    suggestions: (pattern) {
-      print(pattern);
-      return Future.value(['acct1', 'acct2']);
-    },
-  );
+  final BuildContext context;
+  final FineCashRepository repo;
+  TxnProvider txnProvider;
+  TextFieldBloc accountText;
+  TextFieldBloc subAccountText;
+  TextFieldBloc descText;
+  TextFieldBloc amount;
+  InputFieldBloc<DateTime, Object> dateAndTime;
+  SelectFieldBloc<String, dynamic> crOrDr;
 
-  final boolean1 = BooleanFieldBloc();
-
-  final boolean2 = BooleanFieldBloc();
-
-  final select1 = SelectFieldBloc(
-    items: ['Credit', 'Debit'],
-  );
-
-  final select2 = SelectFieldBloc(
-    items: ['Credit', 'Debit'],
-  );
-
-  final multiSelect1 = MultiSelectFieldBloc<String, dynamic>(
-    items: ['Credit', 'Debit'],
-  );
-
-  final date1 = InputFieldBloc<DateTime, Object>();
-
-  final dateAndTime1 = InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
-
-  final time1 = InputFieldBloc<TimeOfDay, Object>();
-
-  AllFieldsFormBloc() {
+  AllFieldsFormBloc(this.context, this.repo, this.txnProvider) {
+    accountText = TextFieldBloc(
+        suggestions: (_) =>
+            Future.value(txnProvider.accountList.map((e) => e).toList()));
+    subAccountText = TextFieldBloc(
+        suggestions: (_) =>
+            Future.value(txnProvider.subAccountList.map((e) => e).toList()));
+    descText = TextFieldBloc();
+    amount = TextFieldBloc();
+    dateAndTime =
+        InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
+    crOrDr = SelectFieldBloc(
+      items: ['Credit', 'Debit'],
+    );
     addFieldBlocs(fieldBlocs: [
-      text1,
-      boolean1,
-      boolean2,
-      select1,
-      select2,
-      multiSelect1,
-      date1,
-      dateAndTime1,
-      time1,
+      accountText,
+      subAccountText,
+      amount,
+      descText,
+      dateAndTime,
+      crOrDr
     ]);
-  }
-
-  void addErrors() {
-    text1.addError('Awesome Error!');
-    boolean1.addError('Awesome Error!');
-    boolean2.addError('Awesome Error!');
-    select1.addError('Awesome Error!');
-    select2.addError('Awesome Error!');
-    multiSelect1.addError('Awesome Error!');
-    date1.addError('Awesome Error!');
-    dateAndTime1.addError('Awesome Error!');
-    time1.addError('Awesome Error!');
   }
 
   @override
   void onSubmitting() async {
+    var isError = false;
     try {
-      await Future<void>.delayed(Duration(milliseconds: 500));
-
-      emitSuccess(canSubmitAgain: true);
+      if (accountText.value.isEmpty) {
+        accountText.addError('Account Cannot be empty');
+        isError = true;
+      }
+      if (subAccountText.value.isEmpty) {
+        subAccountText.addError('Sub-Account Cannot be empty');
+        isError = true;
+      }
+      if (amount.value.isEmpty) {
+        amount.addError('Amount cannot be empty');
+        isError = true;
+      }
+      if (crOrDr.value == null) {
+        crOrDr.addError('Any one must be selected');
+        isError = true;
+      }
+      if (isError)
+        emitFailure();
+      else {
+        print('success');
+        print(await repo.addTxn(TransactionsCompanion.insert(
+          accountHead: accountText.value,
+          subAccountHead: moor.Value(subAccountText.value),
+          credit: crOrDr.value.toString() == 'Credit'
+              ? moor.Value(amount.valueToDouble)
+              : moor.Value.absent(),
+          debit: crOrDr.value.toString() == 'Debit'
+              ? moor.Value(amount.valueToDouble)
+              : moor.Value.absent(),
+          desc: moor.Value(descText.value),
+        )));
+        emitSuccess(canSubmitAgain: true);
+      }
     } catch (e) {
       emitFailure();
     }
