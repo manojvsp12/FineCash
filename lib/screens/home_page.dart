@@ -183,7 +183,7 @@ class AccountSummaryPage extends StatelessWidget {
             categories: subAccountList,
           )
         else
-          SizedBox(height: 0),
+          SizedBox(height: 50),
         Expanded(
           child: Stack(
             children: <Widget>[
