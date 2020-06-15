@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
 
 class AccountSummaryPage extends StatelessWidget {
   final int currentIndex;
-  FineCashRepository repo;
+  final FineCashRepository repo;
   AccountSummaryPage({Key key, this.currentIndex, this.repo}) : super(key: key);
   @override
   Widget build(BuildContext context) {
