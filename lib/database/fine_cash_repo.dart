@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -65,9 +64,6 @@ class FineCashRepository extends _$FineCashRepository {
 
   Future<int> addTxn(TransactionsCompanion entry) async {
     var randomNumber = random.nextInt(icons.length);
-    print(icons[randomNumber].codePoint);
-    print(icons[randomNumber].fontFamily);
-    print(icons[randomNumber].fontPackage);
     int result =
         await into(transactions).insert(entry, mode: InsertMode.insertOrFail);
     this.fetchAccounts();
@@ -77,10 +73,7 @@ class FineCashRepository extends _$FineCashRepository {
     if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
       await addMetaData(MetaDatasCompanion.insert(
           accountHead: entry.accountHead.value.toUpperCase(),
-          icon: json.encode({
-            'codePoint': icons[randomNumber].codePoint,
-            'fontFamily': icons[randomNumber].fontFamily
-          }),
+          icon: icons[randomNumber],
           color: randomColor.randomMaterialColor().value));
     return result;
   }
@@ -92,6 +85,16 @@ class FineCashRepository extends _$FineCashRepository {
     this.fetchAllTxns();
     this.fetchAllMetaDatas();
     return result;
+  }
+
+  void deleteTxn(Set<int> ids) async {
+    ids.forEach((id) {
+      (delete(transactions)..where((tbl) => tbl.id.equals(id))).go();
+    });
+    this.fetchAccounts();
+    this.fetchSubAccounts();
+    this.fetchAllTxns();
+    this.fetchAllMetaDatas();
   }
 
   addMetaData(MetaDatasCompanion data) async {

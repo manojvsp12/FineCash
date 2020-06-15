@@ -6,14 +6,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 
 class TransactionCard extends StatelessWidget {
-  const TransactionCard({
+  TransactionCard({
     Key key,
     this.txn,
     this.press,
+    this.onSelected,
+    this.onDeselected,
   }) : super(key: key);
 
   final Transaction txn;
   final Function press;
+  final Function onSelected;
+  final Function onDeselected;
+  final ValueNotifier color = ValueNotifier(Colors.white);
+  bool selected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,23 +31,28 @@ class TransactionCard extends StatelessWidget {
         vertical: kDefaultPadding / 3,
       ),
       child: InkWell(
+        onDoubleTap: _processSelection,
+        onLongPress: _processSelection,
         onTap: press,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
-            Container(
-              // width: MediaQuery.of(context).size.width / 3,
-              height: 100,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                color: getTxnColor,
-                boxShadow: [kDefaultShadow],
-              ),
-              child: Container(
-                margin: EdgeInsets.only(right: 10),
+            ValueListenableBuilder(
+              valueListenable: color,
+              builder: (context, value, child) => Container(
+                // width: MediaQuery.of(context).size.width / 3,
+                height: 100,
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(22),
+                  color: getTxnColor,
+                  boxShadow: [kDefaultShadow],
+                ),
+                child: Container(
+                  margin: EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: value,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
                 ),
               ),
             ),
@@ -159,5 +170,16 @@ class TransactionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _processSelection() {
+    selected = !selected;
+    if (selected) {
+      color.value = Colors.grey.shade900;
+      onSelected();
+    } else {
+      color.value = Colors.white;
+      onDeselected();
+    }
   }
 }

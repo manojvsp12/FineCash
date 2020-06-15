@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:bubble_bottom_bar/bubble_bottom_bar.dart';
@@ -15,10 +14,13 @@ import 'package:fine_cash/widgets/sub_accounts_list.dart';
 import 'package:fine_cash/widgets/txn_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:icons_helper/icons_helper.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:slide_popup_dialog/slide_popup_dialog.dart' as slideDialog;
 
 ValueNotifier<int> currentIndex = ValueNotifier(0);
+final Set<int> selected = {};
 
 void changePage(int index) {
   currentIndex.value = index;
@@ -37,6 +39,7 @@ class _HomePageState extends State<HomePage> {
   TxnProvider txnProvider;
   MetaDataProvider metaDataProvider;
   FineCashRepository repo;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   var titles = ['Accounts', 'Transactions', 'Report', 'Sync'];
   @override
   void initState() {
@@ -53,6 +56,7 @@ class _HomePageState extends State<HomePage> {
     return ValueListenableBuilder<int>(
       valueListenable: currentIndex,
       builder: (context, index, child) => Scaffold(
+        key: _scaffoldKey,
         appBar: buildAppBar(context, titles[index]),
         backgroundColor: kPrimaryColor,
         body: AccountSummaryPage(currentIndex: index, repo: repo),
@@ -158,7 +162,7 @@ class _HomePageState extends State<HomePage> {
       elevation: 0,
       centerTitle: false,
       title: Padding(
-        padding: const EdgeInsets.only(left: 50),
+        padding: const EdgeInsets.only(left: 150),
         child: Center(
           child: Text(
             title.toUpperCase(),
@@ -168,13 +172,75 @@ class _HomePageState extends State<HomePage> {
       ),
       actions: [
         IconButton(
+          color: Colors.deepPurple,
+          icon: Icon(MdiIcons.sigma),
+          onPressed: () {
+            showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.all(Radius.circular(10.0))),
+                      content: Builder(
+                        builder: (context) {
+                          double total = 0;
+                          try {
+                            total += txnProvider.allTxns
+                                .where((txn) =>
+                                    selected.contains(txn.id) &&
+                                    txn.credit != null)
+                                .map((e) => e.credit)
+                                .reduce((a, b) => a + b);
+                            total -= txnProvider.allTxns
+                                .where((txn) =>
+                                    selected.contains(txn.id) &&
+                                    txn.debit != null)
+                                .map((e) => e.debit)
+                                .reduce((a, b) => a + b);
+                          } on StateError {
+                            // print(e);
+                          }
+                          return Container(
+                            height: MediaQuery.of(context).size.height / 5,
+                            width: MediaQuery.of(context).size.width / 5,
+                            child: Center(
+                              child: Text(
+                                total.toStringAsFixed(0),
+                                style: TextStyle(
+                                  fontFamily: 'OpenSans',
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 50,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ));
+          },
+        ),
+        IconButton(
+          color: Colors.redAccent,
+          icon: Icon(Icons.delete_forever),
+          onPressed: () {
+            repo.deleteTxn(selected);
+            selected.clear();
+            _scaffoldKey.currentState.showSnackBar(
+              SnackBar(
+                backgroundColor: Colors.redAccent,
+                content: Text('Transaction(s) deleted.'),
+              ),
+            );
+          },
+        ),
+        IconButton(
           color: kPrimaryColor,
           icon: Icon(Icons.exit_to_app),
           onPressed: () {
             widget.onLogout(context);
             repo.clearDB();
           },
-        )
+        ),
       ],
     );
   }
@@ -307,10 +373,9 @@ class AccountSummaryPage extends StatelessWidget {
           ),
         if (txnProvider.accountList.isNotEmpty)
           ...txnProvider.accountList.map((e) {
-            var decodedIcon = json.decode(metaDataProvider.getMetaData(e).icon);
             return AccountsCard(
-              icon: IconData(decodedIcon['codePoint'],
-                  fontFamily: decodedIcon['fontFamily']),
+              icon: getIconGuessFavorMaterial(
+                  name: metaDataProvider.getMetaData(e).icon),
               color: Color(metaDataProvider.getMetaData(e).color),
               title: e.toUpperCase(),
               onPressed: () {
@@ -364,6 +429,13 @@ class AccountSummaryPage extends StatelessWidget {
               physics: ClampingScrollPhysics(),
               itemBuilder: (context, index) => TransactionCard(
                 txn: getAllTxns()[index],
+                onSelected: () {
+                  print('selected');
+                  selected.add(getAllTxns()[index].id);
+                },
+                onDeselected: () {
+                  selected.remove(getAllTxns()[index].id);
+                },
                 press: () {
                   slideDialog.showSlideDialog(
                     context: context,
