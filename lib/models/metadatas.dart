@@ -4,5 +4,5 @@ class MetaDatas extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get accountHead => text()();
   TextColumn get icon => text()();
-  TextColumn get color => text()();
+  IntColumn get color => integer()();
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fine_cash/database/remote_db.dart';
+import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,31 +28,35 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TxnProvider(),
-      builder: (context, child) {
-        return ChangeNotifierProvider(
-          create: (_) => LoginProvider(),
-          builder: (context, child) {
-            return MaterialApp(
-              title: 'Flutter Login UI',
-              debugShowCheckedModeBanner: false,
-              initialRoute: '/',
-              routes: {
-                '/': (_) => preferences?.containsKey('isAuth') ?? false
-                    ? preferences['isAuth']
-                        ? HomePage()
-                        : LoginPage(onLogin)
-                    : LoginPage(onLogin),
-                '/loginscreen': (_) => LoginPage(onLogin),
-                '/homescreen': (_) => HomePage(),
-              },
-            );
+    return MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => LoginProvider()),
+          ChangeNotifierProvider(create: (_) => TxnProvider()),
+          ChangeNotifierProvider(create: (_) => MetaDataProvider()),
+        ],
+        child: MaterialApp(
+          title: 'Flutter Login UI',
+          debugShowCheckedModeBanner: false,
+          initialRoute: '/',
+          routes: {
+            '/': (_) => preferences?.containsKey('isAuth') ?? false
+                ? preferences['isAuth'] ? HomePage(onLogout) : LoginPage(onLogin)
+                : LoginPage(onLogin),
+            '/loginscreen': (_) => LoginPage(onLogin),
+            '/homescreen': (_) => HomePage(onLogout),
           },
-        );
-      },
-    );
+        ));
   }
+}
+
+onLogout(context) {
+  Navigator.popAndPushNamed(context, '/loginscreen');
+  var auth = Provider.of<LoginProvider>(context, listen: false);
+  auth.isAuth = false;
+  auth.username = '';
+  auth.pwd = '';
+  write({"isAuth": false});
+
 }
 
 onLogin(context, key, username, pwd) async {

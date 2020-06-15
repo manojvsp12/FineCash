@@ -1,5 +1,4 @@
 import 'package:fine_cash/constants/constants.dart';
-import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/models/account_summary.dart';
 import 'package:flutter/material.dart';
 
@@ -21,7 +20,7 @@ class AccountSummaryCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: kDefaultPadding,
-        vertical: kDefaultPadding / 2,
+        vertical: kDefaultPadding / 100,
       ),
       height: 160,
       child: Stack(
@@ -63,7 +62,7 @@ class AccountSummaryCard extends StatelessWidget {
                           horizontal: kDefaultPadding + 20),
                       child: FittedBox(
                         child: Text(
-                          '₹10000',
+                          getTotalAmt(),
                           style: Theme.of(context).textTheme.bodyText1.copyWith(
                                 fontSize: 30,
                               ),
@@ -118,5 +117,9 @@ class AccountSummaryCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String getTotalAmt() {
+    return '₹10000';
   }
 }

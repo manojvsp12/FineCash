@@ -71,6 +71,29 @@ class TransactionForm extends StatelessWidget {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: <Widget>[
+              DateTimeFieldBlocBuilder(
+                clearIcon: Icon(Icons.clear),
+                dateTimeFieldBloc: formBloc.dateAndTime,
+                canSelectTime: true,
+                format: DateFormat('dd-MM-yyyy  hh:mm'),
+                initialDate: DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime(2100),
+                decoration: InputDecoration(
+                  labelText: 'Date and Time',
+                  prefixIcon: Icon(Icons.date_range),
+                  helperText: 'Date and Time',
+                ),
+              ),
+              RadioButtonGroupFieldBlocBuilder<String>(
+                selectFieldBloc: formBloc.crOrDr,
+                decoration: InputDecoration(
+                  labelText: 'Credit or Debit',
+                  helperText: 'Any one must be selected',
+                  prefixIcon: SizedBox(),
+                ),
+                itemBuilder: (ctx, item) => item,
+              ),
               TextFieldBlocBuilder(
                 maxLength: 130,
                 hideOnEmptySuggestions: true,
@@ -124,29 +147,6 @@ class TransactionForm extends StatelessWidget {
                   prefixIcon: Icon(Icons.text_fields),
                 ),
               ),
-              DateTimeFieldBlocBuilder(
-                clearIcon: Icon(Icons.clear),
-                dateTimeFieldBloc: formBloc.dateAndTime,
-                canSelectTime: true,
-                format: DateFormat('dd-MM-yyyy  hh:mm'),
-                initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
-                lastDate: DateTime(2100),
-                decoration: InputDecoration(
-                  labelText: 'Date and Time',
-                  prefixIcon: Icon(Icons.date_range),
-                  helperText: 'Date and Time',
-                ),
-              ),
-              RadioButtonGroupFieldBlocBuilder<String>(
-                selectFieldBloc: formBloc.crOrDr,
-                decoration: InputDecoration(
-                  labelText: 'Credit or Debit',
-                  helperText: 'Any one must be selected',
-                  prefixIcon: SizedBox(),
-                ),
-                itemBuilder: (ctx, item) => item,
-              ),
               SizedBox(height: 50),
             ],
           ),
@@ -169,18 +169,18 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
 
   AllFieldsFormBloc(this.context, this.repo, this.txnProvider) {
     accountText = TextFieldBloc(
-        suggestions: (_) =>
-            Future.value(txnProvider.accountList.map((e) => e).toList()));
-    subAccountText = TextFieldBloc(
-        suggestions: (_) =>
-            Future.value(txnProvider.subAccountList.map((e) => e).toList()));
+        suggestions: (_) => Future.value(txnProvider.accountList.toList()));
+    subAccountText = TextFieldBloc(suggestions: (_) {
+      var subAccountList = txnProvider.subAccountList;
+      subAccountList.remove('ALL');
+      return Future.value(subAccountList.toList());
+    });
     descText = TextFieldBloc();
     amount = TextFieldBloc();
     dateAndTime =
         InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
-    crOrDr = SelectFieldBloc(
-      items: ['Credit', 'Debit'],
-    );
+    crOrDr =
+        SelectFieldBloc(items: ['Credit', 'Debit'], initialValue: 'Credit');
     addFieldBlocs(fieldBlocs: [
       accountText,
       subAccountText,
@@ -214,8 +214,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       if (isError)
         emitFailure();
       else {
-        print('success');
-        print(await repo.addTxn(TransactionsCompanion.insert(
+        await repo.addTxn(TransactionsCompanion.insert(
           accountHead: accountText.value,
           subAccountHead: moor.Value(subAccountText.value),
           credit: crOrDr.value.toString() == 'Credit'
@@ -225,7 +224,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
               ? moor.Value(amount.valueToDouble)
               : moor.Value.absent(),
           desc: moor.Value(descText.value),
-        )));
+        ));
         emitSuccess(canSubmitAgain: true);
         accountText.clear();
         subAccountText.clear();

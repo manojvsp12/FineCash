@@ -523,7 +523,7 @@ class MetaData extends DataClass implements Insertable<MetaData> {
   final int id;
   final String accountHead;
   final String icon;
-  final String color;
+  final int color;
   MetaData(
       {@required this.id,
       @required this.accountHead,
@@ -539,8 +539,7 @@ class MetaData extends DataClass implements Insertable<MetaData> {
       accountHead: stringType
           .mapFromDatabaseResponse(data['${effectivePrefix}account_head']),
       icon: stringType.mapFromDatabaseResponse(data['${effectivePrefix}icon']),
-      color:
-          stringType.mapFromDatabaseResponse(data['${effectivePrefix}color']),
+      color: intType.mapFromDatabaseResponse(data['${effectivePrefix}color']),
     );
   }
   @override
@@ -556,7 +555,7 @@ class MetaData extends DataClass implements Insertable<MetaData> {
       map['icon'] = Variable<String>(icon);
     }
     if (!nullToAbsent || color != null) {
-      map['color'] = Variable<String>(color);
+      map['color'] = Variable<int>(color);
     }
     return map;
   }
@@ -580,7 +579,7 @@ class MetaData extends DataClass implements Insertable<MetaData> {
       id: serializer.fromJson<int>(json['id']),
       accountHead: serializer.fromJson<String>(json['accountHead']),
       icon: serializer.fromJson<String>(json['icon']),
-      color: serializer.fromJson<String>(json['color']),
+      color: serializer.fromJson<int>(json['color']),
     );
   }
   @override
@@ -590,11 +589,11 @@ class MetaData extends DataClass implements Insertable<MetaData> {
       'id': serializer.toJson<int>(id),
       'accountHead': serializer.toJson<String>(accountHead),
       'icon': serializer.toJson<String>(icon),
-      'color': serializer.toJson<String>(color),
+      'color': serializer.toJson<int>(color),
     };
   }
 
-  MetaData copyWith({int id, String accountHead, String icon, String color}) =>
+  MetaData copyWith({int id, String accountHead, String icon, int color}) =>
       MetaData(
         id: id ?? this.id,
         accountHead: accountHead ?? this.accountHead,
@@ -629,7 +628,7 @@ class MetaDatasCompanion extends UpdateCompanion<MetaData> {
   final Value<int> id;
   final Value<String> accountHead;
   final Value<String> icon;
-  final Value<String> color;
+  final Value<int> color;
   const MetaDatasCompanion({
     this.id = const Value.absent(),
     this.accountHead = const Value.absent(),
@@ -640,7 +639,7 @@ class MetaDatasCompanion extends UpdateCompanion<MetaData> {
     this.id = const Value.absent(),
     @required String accountHead,
     @required String icon,
-    @required String color,
+    @required int color,
   })  : accountHead = Value(accountHead),
         icon = Value(icon),
         color = Value(color);
@@ -648,7 +647,7 @@ class MetaDatasCompanion extends UpdateCompanion<MetaData> {
     Expression<int> id,
     Expression<String> accountHead,
     Expression<String> icon,
-    Expression<String> color,
+    Expression<int> color,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -662,7 +661,7 @@ class MetaDatasCompanion extends UpdateCompanion<MetaData> {
       {Value<int> id,
       Value<String> accountHead,
       Value<String> icon,
-      Value<String> color}) {
+      Value<int> color}) {
     return MetaDatasCompanion(
       id: id ?? this.id,
       accountHead: accountHead ?? this.accountHead,
@@ -684,7 +683,7 @@ class MetaDatasCompanion extends UpdateCompanion<MetaData> {
       map['icon'] = Variable<String>(icon.value);
     }
     if (color.present) {
-      map['color'] = Variable<String>(color.value);
+      map['color'] = Variable<int>(color.value);
     }
     return map;
   }
@@ -731,11 +730,11 @@ class $MetaDatasTable extends MetaDatas
   }
 
   final VerificationMeta _colorMeta = const VerificationMeta('color');
-  GeneratedTextColumn _color;
+  GeneratedIntColumn _color;
   @override
-  GeneratedTextColumn get color => _color ??= _constructColor();
-  GeneratedTextColumn _constructColor() {
-    return GeneratedTextColumn(
+  GeneratedIntColumn get color => _color ??= _constructColor();
+  GeneratedIntColumn _constructColor() {
+    return GeneratedIntColumn(
       'color',
       $tableName,
       false,

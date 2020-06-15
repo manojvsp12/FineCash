@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class TxnProvider with ChangeNotifier {
   Set<String> accountList = {};
-  Set<String> subAccountList = {};
+  List<String> subAccountList = ['ALL'];
   List<Transaction> allTxns = [];
 
   Set<String> get getAccountList => accountList;
@@ -16,7 +16,9 @@ class TxnProvider with ChangeNotifier {
   Set<String> get getSubAccountList => accountList;
 
   setSubAccountList(Set<String> _subAccountList) {
-    this.subAccountList = _subAccountList;
+    subAccountList = ['ALL'];
+    _subAccountList
+        .forEach((element) => this.subAccountList.add(element.toUpperCase()));
     notifyListeners();
   }
 

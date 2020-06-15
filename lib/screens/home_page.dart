@@ -1,20 +1,24 @@
+import 'dart:convert';
+
 import 'package:bubble_bottom_bar/bubble_bottom_bar.dart';
 import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/models/account_summary.dart';
+import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
-import 'package:fine_cash/utilities/random_icon.dart';
 import 'package:fine_cash/widgets/account_summary_card.dart';
 import 'package:fine_cash/widgets/process_transaction.dart';
+import 'package:fine_cash/widgets/sub_accounts_list.dart';
 import 'package:fine_cash/widgets/txn_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:random_color/random_color.dart';
 import 'package:slide_popup_dialog/slide_popup_dialog.dart' as slideDialog;
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key}) : super(key: key);
+  final Function onLogout;
+
+  HomePage(this.onLogout, {Key key}) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -23,6 +27,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   ValueNotifier<int> currentIndex = ValueNotifier(0);
   TxnProvider txnProvider;
+  MetaDataProvider metaDataProvider;
   FineCashRepository repo;
   var titles = ['Accounts', 'Transactions', 'Report', 'Sync'];
   @override
@@ -30,7 +35,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     if (txnProvider == null)
       txnProvider = Provider.of<TxnProvider>(context, listen: false);
-    if (repo == null) repo = FineCashRepository(txnProvider);
+    if (metaDataProvider == null)
+      metaDataProvider = Provider.of<MetaDataProvider>(context, listen: false);
+    if (repo == null) repo = FineCashRepository(txnProvider, metaDataProvider);
   }
 
   void changePage(int index) {
@@ -152,7 +159,10 @@ class _HomePageState extends State<HomePage> {
         IconButton(
           color: kPrimaryColor,
           icon: Icon(Icons.exit_to_app),
-          onPressed: () => Navigator.popAndPushNamed(context, '/loginscreen'),
+          onPressed: () {
+            widget.onLogout(context);
+            repo.clearDB();
+          },
         )
       ],
     );
@@ -164,11 +174,16 @@ class AccountSummaryPage extends StatelessWidget {
   AccountSummaryPage({Key key, this.currentIndex}) : super(key: key);
   @override
   Widget build(BuildContext context) {
+    var subAccountList = Provider.of<TxnProvider>(context).subAccountList;
     return Column(
       children: <Widget>[
         // SearchBox(onChanged: (value) {}),
-        // AccountsList(),
-        SizedBox(height: kDefaultPadding / 2),
+        if (currentIndex == 1 && subAccountList.length > 1)
+          SubAccountsList(
+            categories: subAccountList,
+          )
+        else
+          SizedBox(height: 0),
         Expanded(
           child: Stack(
             children: <Widget>[
@@ -239,10 +254,6 @@ Widget _buildTxnDetails(context) {
         : ListView.builder(
             padding: EdgeInsets.zero,
             itemCount: txnProvider.allTxns.length,
-            // itemExtent: 130,
-            // cacheExtent: 1000,
-            // scrollDirection: Axis.vertical,
-            // shrinkWrap: true,
             physics: ClampingScrollPhysics(),
             itemBuilder: (context, index) => TransactionCard(
               txn: txnProvider.allTxns[index],
@@ -263,6 +274,7 @@ Widget _buildTxnDetails(context) {
 
 Widget _buildAccounts(context) {
   TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+  MetaDataProvider metaDataProvider = Provider.of<MetaDataProvider>(context);
   return Wrap(
     alignment: WrapAlignment.center,
     spacing: 20,
@@ -273,16 +285,18 @@ Widget _buildAccounts(context) {
           child: Text('Press \'+\' to add a new Account'),
         ),
       if (txnProvider.accountList.isNotEmpty)
-        ...txnProvider.accountList
-            .map((e) => AccountsCard(
-                  icon: randomIcon,
-                  color: RandomColor().randomColor(),
-                  title: e.toUpperCase(),
-                  onPressed: () {
-                    print('pressed');
-                  },
-                ))
-            .toList(),
+        ...txnProvider.accountList.map((e) {
+          var decodedIcon = json.decode(metaDataProvider.getMetaData(e).icon);
+          return AccountsCard(
+            icon: IconData(decodedIcon['codePoint'],
+                fontFamily: decodedIcon['fontFamily']),
+            color: Color(metaDataProvider.getMetaData(e).color),
+            title: e.toUpperCase(),
+            onPressed: () {
+              print('pressed');
+            },
+          );
+        }).toList()
     ],
   );
 }
