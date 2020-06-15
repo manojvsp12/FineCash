@@ -65,7 +65,6 @@ class FineCashRepository extends _$FineCashRepository {
 
   Future<int> addTxn(TransactionsCompanion entry) async {
     var randomNumber = random.nextInt(icons.length);
-    print(randomNumber);
     print(icons[randomNumber].codePoint);
     print(icons[randomNumber].fontFamily);
     print(icons[randomNumber].fontPackage);
@@ -83,6 +82,15 @@ class FineCashRepository extends _$FineCashRepository {
             'fontFamily': icons[randomNumber].fontFamily
           }),
           color: randomColor.randomMaterialColor().value));
+    return result;
+  }
+
+  Future<bool> updateTxn(TransactionsCompanion entry) async {
+    bool result = await update(transactions).replace(entry);
+    this.fetchAccounts();
+    this.fetchSubAccounts();
+    this.fetchAllTxns();
+    this.fetchAllMetaDatas();
     return result;
   }
 

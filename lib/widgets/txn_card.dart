@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:flutter/material.dart';
@@ -20,12 +22,10 @@ class TransactionCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: kDefaultPadding,
-        vertical: kDefaultPadding / 2,
+        vertical: kDefaultPadding / 3,
       ),
       child: InkWell(
-        onTap: () {
-          print('pressed');
-        },
+        onTap: press,
         child: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
@@ -54,7 +54,7 @@ class TransactionCard extends StatelessWidget {
                 color: Colors.transparent,
                 padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
                 height: 160,
-                width: 300,
+                width: Platform.isWindows ? 300 : 200,
                 child: Center(
                   child: RichText(
                     text: TextSpan(
@@ -62,7 +62,7 @@ class TransactionCard extends StatelessWidget {
                       style: TextStyle(
                           color: getTxnColor,
                           fontWeight: FontWeight.bold,
-                          fontSize: 25),
+                          fontSize: Platform.isWindows ? 25 : 12),
                       children: [
                         TextSpan(
                             text: txn.credit == null
@@ -71,7 +71,7 @@ class TransactionCard extends StatelessWidget {
                             style: TextStyle(
                                 color: getTxnColor,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 40)),
+                                fontSize: Platform.isWindows ? 40 : 18)),
                       ],
                     ),
                   ),
@@ -99,10 +99,10 @@ class TransactionCard extends StatelessWidget {
                           style: TextStyle(
                               color: kTextLightColor,
                               fontWeight: FontWeight.w600,
-                              fontSize: 18),
+                              fontSize: Platform.isWindows ? 18 : 15),
                           children: [
                             TextSpan(
-                                text: '|',
+                                text: Platform.isWindows ? '|' : '\n',
                                 style: TextStyle(color: getTxnColor)),
                             TextSpan(
                               text:
@@ -110,7 +110,7 @@ class TransactionCard extends StatelessWidget {
                               style: TextStyle(
                                   color: kTextLightColor,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 16),
+                                  fontSize: Platform.isWindows ? 16 : 14),
                             ),
                             TextSpan(text: '\n'),
                             if (txn.desc.isNotEmpty)
@@ -119,14 +119,14 @@ class TransactionCard extends StatelessWidget {
                                   style: TextStyle(
                                       color: kTextLightColor,
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 15)),
+                                      fontSize: Platform.isWindows ? 15 : 13)),
                             if (txn.desc.isNotEmpty)
                               TextSpan(
                                   text: txn.desc,
                                   style: TextStyle(
                                       color: kTextLightColor,
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 15)),
+                                      fontSize: Platform.isWindows ? 15 : 13)),
                           ],
                         ),
                       ),

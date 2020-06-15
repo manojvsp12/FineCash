@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,23 +12,28 @@ class ProcessTransaction extends StatelessWidget {
   final BuildContext context;
   final FineCashRepository repo;
   final TxnProvider txnProvider;
-  const ProcessTransaction({Key key, this.context, this.repo, this.txnProvider})
+  final int txnIndex;
+  final FocusNode submitBtn = FocusNode();
+  ProcessTransaction(
+      {Key key, this.context, this.repo, this.txnProvider, this.txnIndex})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AllFieldsFormBloc(context, repo, txnProvider),
+      create: (context) =>
+          AllFieldsFormBloc(context, repo, txnProvider, txnIndex),
       child: Builder(
         builder: (context) {
           return Expanded(
             child: Scaffold(
-              body: TransactionForm(context),
+              body: TransactionForm(context, submitBtn),
               floatingActionButton: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(width: 12),
                   FloatingActionButton.extended(
+                    focusNode: submitBtn,
                     backgroundColor: Colors.amber,
                     foregroundColor: Colors.black,
                     onPressed: () {
@@ -47,8 +54,15 @@ class ProcessTransaction extends StatelessWidget {
 
 class TransactionForm extends StatelessWidget {
   final BuildContext ctx;
+  final FocusNode dateAndTime = FocusNode();
+  final FocusNode crOrDr = FocusNode();
+  final FocusNode accountText = FocusNode();
+  final FocusNode subAccountText = FocusNode();
+  final FocusNode amount = FocusNode();
+  final FocusNode descText = FocusNode();
+  final FocusNode submitBtn;
 
-  TransactionForm(this.ctx);
+  TransactionForm(this.ctx, this.submitBtn);
 
   @override
   Widget build(BuildContext context) {
@@ -72,10 +86,12 @@ class TransactionForm extends StatelessWidget {
           child: Column(
             children: <Widget>[
               DateTimeFieldBlocBuilder(
+                focusNode: dateAndTime,
+                nextFocusNode: crOrDr,
                 clearIcon: Icon(Icons.clear),
                 dateTimeFieldBloc: formBloc.dateAndTime,
                 canSelectTime: true,
-                format: DateFormat('dd-MM-yyyy  hh:mm'),
+                format: DateFormat('dd-MM-yyyy  hh:mm a'),
                 initialDate: DateTime.now(),
                 firstDate: DateTime(1900),
                 lastDate: DateTime(2100),
@@ -86,6 +102,7 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               RadioButtonGroupFieldBlocBuilder<String>(
+                nextFocusNode: accountText,
                 selectFieldBloc: formBloc.crOrDr,
                 decoration: InputDecoration(
                   labelText: 'Credit or Debit',
@@ -95,6 +112,10 @@ class TransactionForm extends StatelessWidget {
                 itemBuilder: (ctx, item) => item,
               ),
               TextFieldBlocBuilder(
+                autofocus: Platform.isWindows ? true : false,
+                focusNode: accountText,
+                nextFocusNode: subAccountText,
+                suggestionsAnimationDuration: const Duration(milliseconds: 0),
                 maxLength: 130,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
@@ -108,6 +129,9 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                focusNode: subAccountText,
+                nextFocusNode: amount,
+                suggestionsAnimationDuration: const Duration(milliseconds: 0),
                 maxLength: 130,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
@@ -121,6 +145,9 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                focusNode: amount,
+                nextFocusNode: descText,
+                suggestionsAnimationDuration: const Duration(milliseconds: 0),
                 keyboardType: TextInputType.number,
                 maxLength: 30,
                 hideOnEmptySuggestions: true,
@@ -135,6 +162,9 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                focusNode: descText,
+                nextFocusNode: submitBtn,
+                suggestionsAnimationDuration: const Duration(milliseconds: 0),
                 maxLength: 200,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
@@ -159,6 +189,7 @@ class TransactionForm extends StatelessWidget {
 class AllFieldsFormBloc extends FormBloc<String, String> {
   final BuildContext context;
   final FineCashRepository repo;
+  final int txnIndex;
   TxnProvider txnProvider;
   TextFieldBloc accountText;
   TextFieldBloc subAccountText;
@@ -166,21 +197,36 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
   TextFieldBloc amount;
   InputFieldBloc<DateTime, Object> dateAndTime;
   SelectFieldBloc<String, dynamic> crOrDr;
+  Transaction txn;
 
-  AllFieldsFormBloc(this.context, this.repo, this.txnProvider) {
+  AllFieldsFormBloc(this.context, this.repo, this.txnProvider, this.txnIndex) {
+    txn = txnIndex == null ? null : txnProvider.getAllTxns[txnIndex];
     accountText = TextFieldBloc(
-        suggestions: (_) => Future.value(txnProvider.accountList.toList()));
-    subAccountText = TextFieldBloc(suggestions: (_) {
-      var subAccountList = txnProvider.subAccountList;
-      subAccountList.remove('ALL');
-      return Future.value(subAccountList.toList());
-    });
-    descText = TextFieldBloc();
-    amount = TextFieldBloc();
-    dateAndTime =
-        InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
-    crOrDr =
-        SelectFieldBloc(items: ['Credit', 'Debit'], initialValue: 'Credit');
+      initialValue: txn == null ? '' : txn.accountHead,
+      suggestions: (_) => Future.value(txnProvider.accountList.toList()),
+    );
+    subAccountText = TextFieldBloc(
+      suggestions: (_) {
+        var subAccountList = txnProvider.subAccountList;
+        subAccountList.remove('ALL');
+        return Future.value(subAccountList.toList());
+      },
+      initialValue: txn == null ? '' : txn.subAccountHead,
+    );
+    descText = TextFieldBloc(
+      initialValue: txn == null ? '' : txn.desc,
+    );
+    amount = TextFieldBloc(
+      initialValue: txn == null
+          ? ''
+          : txn.credit == null ? txn.debit.toString() : txn.credit.toString(),
+    );
+    dateAndTime = InputFieldBloc<DateTime, Object>(
+        initialValue: txn == null ? DateTime.now() : txn.createdDTime);
+    crOrDr = SelectFieldBloc(
+        items: ['Credit', 'Debit'],
+        initialValue:
+            txn == null ? 'Credit' : txn.credit == null ? 'Debit' : 'Credit');
     addFieldBlocs(fieldBlocs: [
       accountText,
       subAccountText,
@@ -214,23 +260,40 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       if (isError)
         emitFailure();
       else {
-        await repo.addTxn(TransactionsCompanion.insert(
-          accountHead: accountText.value,
-          subAccountHead: moor.Value(subAccountText.value),
-          credit: crOrDr.value.toString() == 'Credit'
-              ? moor.Value(amount.valueToDouble)
-              : moor.Value.absent(),
-          debit: crOrDr.value.toString() == 'Debit'
-              ? moor.Value(amount.valueToDouble)
-              : moor.Value.absent(),
-          desc: moor.Value(descText.value),
-        ));
+        print(crOrDr.value.toString());
+        if (txn == null)
+          await repo.addTxn(TransactionsCompanion.insert(
+            accountHead: accountText.value,
+            subAccountHead: moor.Value(subAccountText.value),
+            credit: crOrDr.value.toString() == 'Credit'
+                ? moor.Value(amount.valueToDouble)
+                : moor.Value.absent(),
+            debit: crOrDr.value.toString() == 'Debit'
+                ? moor.Value(amount.valueToDouble)
+                : moor.Value.absent(),
+            desc: moor.Value(descText.value),
+            createdDTime: moor.Value(dateAndTime.value),
+          ));
+        else
+          await repo.updateTxn(TransactionsCompanion.insert(
+            id: moor.Value(txn.id),
+            createdDTime: moor.Value(dateAndTime.value),
+            accountHead: accountText.value,
+            subAccountHead: moor.Value(subAccountText.value),
+            credit: crOrDr.value.toString() == 'Credit'
+                ? moor.Value(amount.valueToDouble)
+                : moor.Value(null),
+            debit: crOrDr.value.toString() == 'Debit'
+                ? moor.Value(amount.valueToDouble)
+                : moor.Value(null),
+            desc: moor.Value(descText.value),
+          ));
         emitSuccess(canSubmitAgain: true);
         accountText.clear();
         subAccountText.clear();
         amount.clear();
         descText.clear();
-        crOrDr.clear();
+        crOrDr = SelectFieldBloc(initialValue: 'Credit');
         dateAndTime =
             InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
       }

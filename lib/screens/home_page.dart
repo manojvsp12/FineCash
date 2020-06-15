@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:bubble_bottom_bar/bubble_bottom_bar.dart';
 import 'package:fine_cash/constants/constants.dart';
@@ -51,7 +52,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context, index, child) => Scaffold(
         appBar: buildAppBar(context, titles[index]),
         backgroundColor: kPrimaryColor,
-        body: AccountSummaryPage(currentIndex: index),
+        body: AccountSummaryPage(currentIndex: index, repo: repo),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
         floatingActionButton: _buildFloatingActionButton(context),
         bottomNavigationBar: _buildNavBar(index),
@@ -171,7 +172,8 @@ class _HomePageState extends State<HomePage> {
 
 class AccountSummaryPage extends StatelessWidget {
   final int currentIndex;
-  AccountSummaryPage({Key key, this.currentIndex}) : super(key: key);
+  FineCashRepository repo;
+  AccountSummaryPage({Key key, this.currentIndex, this.repo}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     var subAccountList = Provider.of<TxnProvider>(context).subAccountList;
@@ -226,79 +228,86 @@ class AccountSummaryPage extends StatelessWidget {
       ),
     );
   }
-}
 
-Widget _getPageDetails(index, context) {
-  switch (index) {
-    case 0:
-      return _buildAccounts(context);
-      break;
-    case 1:
-      return _buildTxnDetails(context);
-      break;
-    case 2:
-    case 3:
-    default:
-      return Container();
+  Widget _getPageDetails(index, context) {
+    switch (index) {
+      case 0:
+        return _buildAccounts(context);
+        break;
+      case 1:
+        return _buildTxnDetails(context);
+        break;
+      case 2:
+      case 3:
+      default:
+        return Container();
+    }
   }
-}
 
-Widget _buildTxnDetails(context) {
-  TxnProvider txnProvider = Provider.of<TxnProvider>(context);
-  return SizedBox(
-    height: MediaQuery.of(context).size.height * .62,
-    child: txnProvider.allTxns.isEmpty
-        ? Center(
-            child: Text('Press \'+\' to add new Transaction'),
-          )
-        : ListView.builder(
-            padding: EdgeInsets.zero,
-            itemCount: txnProvider.allTxns.length,
-            physics: ClampingScrollPhysics(),
-            itemBuilder: (context, index) => TransactionCard(
-              txn: txnProvider.allTxns[index],
-              press: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => DetailsScreen(
-                //       product: products[index],
-                //     ),
-                //   ),
-                // );
-              },
+  Widget _buildTxnDetails(context) {
+    TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+    return SizedBox(
+      height: Platform.isWindows
+          ? MediaQuery.of(context).size.height * .62
+          : MediaQuery.of(context).size.height * .59,
+      child: txnProvider.allTxns.isEmpty
+          ? Center(
+              child: Text('Press \'+\' to add new Transaction'),
+            )
+          : ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: txnProvider.allTxns.length,
+              physics: ClampingScrollPhysics(),
+              itemBuilder: (context, index) => TransactionCard(
+                txn: txnProvider.allTxns[index],
+                press: () {
+                  slideDialog.showSlideDialog(
+                    context: context,
+                    child: ProcessTransaction(
+                      context: context,
+                      repo: repo,
+                      txnProvider: txnProvider,
+                      txnIndex: index,
+                    ),
+                    barrierColor: Colors.grey,
+                    pillColor: Colors.amberAccent,
+                    backgroundColor: Colors.white,
+                  );
+                },
+              ),
             ),
-          ),
-  );
-}
+    );
+  }
 
-Widget _buildAccounts(context) {
-  TxnProvider txnProvider = Provider.of<TxnProvider>(context);
-  MetaDataProvider metaDataProvider = Provider.of<MetaDataProvider>(context);
-  return Wrap(
-    alignment: WrapAlignment.center,
-    spacing: 20,
-    runSpacing: 30.0,
-    children: <Widget>[
-      if (txnProvider.accountList.isEmpty)
-        Center(
-          child: Text('Press \'+\' to add a new Account'),
-        ),
-      if (txnProvider.accountList.isNotEmpty)
-        ...txnProvider.accountList.map((e) {
-          var decodedIcon = json.decode(metaDataProvider.getMetaData(e).icon);
-          return AccountsCard(
-            icon: IconData(decodedIcon['codePoint'],
-                fontFamily: decodedIcon['fontFamily']),
-            color: Color(metaDataProvider.getMetaData(e).color),
-            title: e.toUpperCase(),
-            onPressed: () {
-              print('pressed');
-            },
-          );
-        }).toList()
-    ],
-  );
+  Widget _buildAccounts(context) {
+    TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+    MetaDataProvider metaDataProvider = Provider.of<MetaDataProvider>(context);
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 20,
+      runSpacing: 30.0,
+      children: <Widget>[
+        if (txnProvider.accountList.isEmpty)
+          Center(
+            child: Text('Press \'+\' to add a new Account'),
+          ),
+        if (txnProvider.accountList.isNotEmpty)
+          ...txnProvider.accountList.map((e) {
+            var decodedIcon = json.decode(metaDataProvider.getMetaData(e).icon);
+            return AccountsCard(
+              icon: IconData(decodedIcon['codePoint'],
+                  fontFamily: decodedIcon['fontFamily']),
+              color: Color(metaDataProvider.getMetaData(e).color),
+              title: e.toUpperCase(),
+              onPressed: () {
+                print('1');
+              },
+            );
+          }).toList()
+      ],
+    );
+  }
 }
 
 class AccountsCard extends StatelessWidget {
