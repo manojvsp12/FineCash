@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fine_cash/database/remote_db.dart';
+import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/screens/home_page.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => LoginProvider()),
           ChangeNotifierProvider(create: (_) => TxnProvider()),
           ChangeNotifierProvider(create: (_) => MetaDataProvider()),
+          ChangeNotifierProvider(create: (_) => FilterProvider()),
         ],
         child: MaterialApp(
           title: 'Flutter Login UI',
@@ -40,7 +42,9 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
           routes: {
             '/': (_) => preferences?.containsKey('isAuth') ?? false
-                ? preferences['isAuth'] ? HomePage(onLogout) : LoginPage(onLogin)
+                ? preferences['isAuth']
+                    ? HomePage(onLogout)
+                    : LoginPage(onLogin)
                 : LoginPage(onLogin),
             '/loginscreen': (_) => LoginPage(onLogin),
             '/homescreen': (_) => HomePage(onLogout),
@@ -56,7 +60,6 @@ onLogout(context) {
   auth.username = '';
   auth.pwd = '';
   write({"isAuth": false});
-
 }
 
 onLogin(context, key, username, pwd) async {

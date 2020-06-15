@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 
 class SubAccountsList extends StatefulWidget {
   final List categories;
+  final Function onPressed;
 
-  const SubAccountsList({Key key, this.categories}) : super(key: key);
+  const SubAccountsList({Key key, this.categories, this.onPressed})
+      : super(key: key);
 
   @override
   _SubAccountsListState createState() => _SubAccountsListState();
@@ -27,14 +29,16 @@ class _SubAccountsListState extends State<SubAccountsList> {
               onTap: () {
                 setState(() {
                   selectedIndex = index;
+                  widget.onPressed(index);
                 });
               },
               child: Container(
                 alignment: Alignment.center,
                 margin: EdgeInsets.only(
                   left: kDefaultPadding,
-                  right:
-                      index == widget.categories.length - 1 ? kDefaultPadding : 0,
+                  right: index == widget.categories.length - 1
+                      ? kDefaultPadding
+                      : 0,
                 ),
                 padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
                 decoration: BoxDecoration(

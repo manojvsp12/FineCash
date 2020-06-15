@@ -5,9 +5,11 @@ import 'package:bubble_bottom_bar/bubble_bottom_bar.dart';
 import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/models/account_summary.dart';
+import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:fine_cash/widgets/account_summary_card.dart';
+import 'package:fine_cash/widgets/accounts_card.dart';
 import 'package:fine_cash/widgets/process_transaction.dart';
 import 'package:fine_cash/widgets/sub_accounts_list.dart';
 import 'package:fine_cash/widgets/txn_card.dart';
@@ -15,6 +17,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:slide_popup_dialog/slide_popup_dialog.dart' as slideDialog;
+
+ValueNotifier<int> currentIndex = ValueNotifier(0);
+
+void changePage(int index) {
+  currentIndex.value = index;
+}
 
 class HomePage extends StatefulWidget {
   final Function onLogout;
@@ -26,7 +34,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  ValueNotifier<int> currentIndex = ValueNotifier(0);
   TxnProvider txnProvider;
   MetaDataProvider metaDataProvider;
   FineCashRepository repo;
@@ -41,10 +48,6 @@ class _HomePageState extends State<HomePage> {
     if (repo == null) repo = FineCashRepository(txnProvider, metaDataProvider);
   }
 
-  void changePage(int index) {
-    currentIndex.value = index;
-  }
-
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
@@ -55,7 +58,7 @@ class _HomePageState extends State<HomePage> {
         body: AccountSummaryPage(currentIndex: index, repo: repo),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
         floatingActionButton: _buildFloatingActionButton(context),
-        bottomNavigationBar: _buildNavBar(index),
+        bottomNavigationBar: _buildNavBar(index, context),
       ),
     );
   }
@@ -81,12 +84,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  BubbleBottomBar _buildNavBar(int index) {
+  BubbleBottomBar _buildNavBar(int index, context) {
+    FilterProvider filter = Provider.of<FilterProvider>(context);
     return BubbleBottomBar(
       backgroundColor: Colors.white,
       opacity: .2,
       currentIndex: index,
-      onTap: changePage,
+      onTap: (index) {
+        print(index);
+        filter.acctFilter = [];
+        filter.subAcctFilter = [];
+        repo.fetchSubAccounts();
+        changePage(index);
+      },
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       elevation: 8,
       fabLocation: BubbleBottomBarFabLocation.end,
@@ -176,13 +186,51 @@ class AccountSummaryPage extends StatelessWidget {
   AccountSummaryPage({Key key, this.currentIndex, this.repo}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    var subAccountList = Provider.of<TxnProvider>(context).subAccountList;
+    TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+    FilterProvider filter = Provider.of<FilterProvider>(context);
+    List<String> getSubAcctList() {
+      var subAccountList = txnProvider.getSubAccountList;
+      // if (filter.acctFilter.isNotEmpty && filter.subAcctFilter.isEmpty) {
+      //   subAccountList = {'ALL'};
+      //   subAccountList.addAll(txnProvider.getAllTxns
+      //       .where((element) =>
+      //           filter.acctFilter.contains(element.accountHead.toUpperCase()))
+      //       .map((e) => e.subAccountHead.toUpperCase())
+      //       .toSet());
+      // }
+      // if (filter.acctFilter.isEmpty && filter.subAcctFilter.isNotEmpty) {
+      //   subAccountList = {'ALL'};
+      //   subAccountList.addAll(txnProvider.getAllTxns
+      //       .where((element) => filter.subAcctFilter
+      //           .contains(element.subAccountHead.toUpperCase()))
+      //       .map((e) => e.subAccountHead.toUpperCase())
+      //       .toSet());
+      // }
+      // if (filter.acctFilter.isNotEmpty && filter.subAcctFilter.isNotEmpty) {
+      //   subAccountList = {'ALL'};
+      //   subAccountList.addAll(txnProvider.getAllTxns
+      //       .where((element) =>
+      //           filter.acctFilter.contains(element.accountHead.toUpperCase()) &&
+      //           filter.subAcctFilter
+      //               .contains(element.subAccountHead.toUpperCase()))
+      //       .map((e) => e.subAccountHead.toUpperCase())
+      //       .toSet());
+      // }
+      return subAccountList.toList();
+    }
+
     return Column(
       children: <Widget>[
         // SearchBox(onChanged: (value) {}),
-        if (currentIndex == 1 && subAccountList.length > 1)
+        if (currentIndex == 1 && getSubAcctList().length > 1)
           SubAccountsList(
-            categories: subAccountList,
+            categories: getSubAcctList(),
+            onPressed: (index) {
+              if (getSubAcctList()[index] == 'ALL')
+                filter.subAcctFilter = [];
+              else
+                filter.subAcctFilter = [getSubAcctList()[index]];
+            },
           )
         else
           SizedBox(height: 50),
@@ -199,7 +247,7 @@ class AccountSummaryPage extends StatelessWidget {
                   ),
                 ),
               ),
-              _buildAccountDetails(currentIndex, context),
+              _buildAccountSummaryDetails(currentIndex, context),
             ],
           ),
         ),
@@ -207,7 +255,7 @@ class AccountSummaryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountDetails(index, context) {
+  Widget _buildAccountSummaryDetails(index, context) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -244,44 +292,9 @@ class AccountSummaryPage extends StatelessWidget {
     }
   }
 
-  Widget _buildTxnDetails(context) {
-    TxnProvider txnProvider = Provider.of<TxnProvider>(context);
-    return SizedBox(
-      height: Platform.isWindows
-          ? MediaQuery.of(context).size.height * .62
-          : MediaQuery.of(context).size.height * .59,
-      child: txnProvider.allTxns.isEmpty
-          ? Center(
-              child: Text('Press \'+\' to add new Transaction'),
-            )
-          : ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: txnProvider.allTxns.length,
-              physics: ClampingScrollPhysics(),
-              itemBuilder: (context, index) => TransactionCard(
-                txn: txnProvider.allTxns[index],
-                press: () {
-                  slideDialog.showSlideDialog(
-                    context: context,
-                    child: ProcessTransaction(
-                      context: context,
-                      repo: repo,
-                      txnProvider: txnProvider,
-                      txnIndex: index,
-                    ),
-                    barrierColor: Colors.grey,
-                    pillColor: Colors.amberAccent,
-                    backgroundColor: Colors.white,
-                  );
-                },
-              ),
-            ),
-    );
-  }
-
   Widget _buildAccounts(context) {
     TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+    FilterProvider filter = Provider.of<FilterProvider>(context);
     MetaDataProvider metaDataProvider = Provider.of<MetaDataProvider>(context);
     return Wrap(
       alignment: WrapAlignment.center,
@@ -301,63 +314,72 @@ class AccountSummaryPage extends StatelessWidget {
               color: Color(metaDataProvider.getMetaData(e).color),
               title: e.toUpperCase(),
               onPressed: () {
-                print('1');
+                filter.acctFilter = [];
+                filter.acctFilter = [e];
+                changePage(1);
               },
             );
           }).toList()
       ],
     );
   }
-}
 
-class AccountsCard extends StatelessWidget {
-  final Function onPressed;
-  final IconData icon;
-  final String title;
-  final Color color;
+  Widget _buildTxnDetails(context) {
+    TxnProvider txnProvider = Provider.of<TxnProvider>(context);
+    FilterProvider filter = Provider.of<FilterProvider>(context);
+    List<Transaction> getAllTxns() {
+      var allTxns = txnProvider.allTxns;
+      if (filter.acctFilter.isNotEmpty && filter.subAcctFilter.isEmpty) {
+        return allTxns.where((element) {
+          return filter.acctFilter.contains(element.accountHead.toUpperCase());
+        }).toList();
+      }
+      if (filter.acctFilter.isEmpty && filter.subAcctFilter.isNotEmpty)
+        return allTxns.where((element) {
+          return filter.subAcctFilter
+              .contains(element.subAccountHead.toUpperCase());
+        }).toList();
+      if (filter.acctFilter.isNotEmpty && filter.subAcctFilter.isNotEmpty)
+        return allTxns.where((element) {
+          return filter.acctFilter
+                  .contains(element.accountHead.toUpperCase()) &&
+              filter.subAcctFilter
+                  .contains(element.subAccountHead.toUpperCase());
+        }).toList();
+      return allTxns;
+    }
 
-  const AccountsCard(
-      {Key key, this.onPressed, this.icon, this.title, this.color})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onPressed,
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.1,
-        width: MediaQuery.of(context).size.width * 0.22,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey[200],
-              blurRadius: 10,
-              spreadRadius: 5,
+    return SizedBox(
+      height: Platform.isWindows
+          ? MediaQuery.of(context).size.height * .62
+          : MediaQuery.of(context).size.height * .59,
+      child: txnProvider.allTxns.isEmpty
+          ? Center(
+              child: Text('Press \'+\' to add new Transaction'),
             )
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(
-              icon,
-              size: 50,
-              color: color,
+          : ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: getAllTxns().length,
+              physics: ClampingScrollPhysics(),
+              itemBuilder: (context, index) => TransactionCard(
+                txn: getAllTxns()[index],
+                press: () {
+                  slideDialog.showSlideDialog(
+                    context: context,
+                    child: ProcessTransaction(
+                      context: context,
+                      repo: repo,
+                      txnProvider: txnProvider,
+                      txnIndex: index,
+                    ),
+                    barrierColor: Colors.grey,
+                    pillColor: Colors.amberAccent,
+                    backgroundColor: Colors.white,
+                  );
+                },
+              ),
             ),
-            SizedBox(
-              height: 10,
-            ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headline6.copyWith(
-                    fontSize: 15,
-                  ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
