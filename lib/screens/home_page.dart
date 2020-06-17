@@ -722,7 +722,7 @@ class _ReportFormBloc extends FormBloc<String, String> {
           content: Text(
             'Report generated successfully ' +
                 (Platform.isWindows
-                    ? 'Documents/FineCash/Reports'
+                    ? 'in Documents/FineCash/Reports'
                     : 'in Downloads/FineCash/Reports.'),
           ),
         ),
