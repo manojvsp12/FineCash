@@ -95,7 +95,6 @@ class TransactionCard extends StatelessWidget {
               left: 0,
               child: SizedBox(
                 height: 136,
-                // our image take 200 width, thats why we set out total width - 200
                 width: size.width,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -5,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 
 Map<String, dynamic> preferences;
 
+String localPath;
+
 String _user;
 
 String get user => _user ?? '';
@@ -16,25 +18,27 @@ set user(String user) {
 Future<String> get _localPath async {
   if (Platform.isWindows) {
     final directories = await getApplicationDocumentsDirectory();
-    return directories.path;
+    localPath = directories.path;
+    return localPath;
   } else {
     final directories = await getExternalStorageDirectory();
-    return directories.path;
+    localPath = directories.path;
+    return localPath;
   }
 }
 
 Future<File> get _localFile async {
-  final path = await _localPath;
+  localPath = await _localPath;
   if (Platform.isWindows) {
-    var dir = new Directory('$path\\FineCash');
+    var dir = new Directory('$localPath\\FineCash');
     if (dir.existsSync())
-      return File('$path\\FineCash\\application.properties');
+      return File('$localPath\\FineCash\\application.properties');
     else {
-      new Directory('$path\\FineCash').createSync();
-      return File('$path\\FineCash\\application.properties');
+      new Directory('$localPath\\FineCash').createSync();
+      return File('$localPath\\FineCash\\application.properties');
     }
   } else
-    return File('$path/application.properties');
+    return File('$localPath/application.properties');
 }
 
 write(Map<String, dynamic> contents) async {

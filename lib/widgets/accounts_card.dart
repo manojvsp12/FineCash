@@ -39,11 +39,13 @@ class AccountsCard extends StatelessWidget {
             SizedBox(
               height: 10,
             ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headline6.copyWith(
-                    fontSize: 15,
-                  ),
+            FittedBox(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.headline6.copyWith(
+                      fontSize: 15,
+                    ),
+              ),
             ),
           ],
         ),

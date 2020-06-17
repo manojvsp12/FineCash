@@ -4,6 +4,7 @@ import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:moor/moor.dart' as moor;
 import 'package:line_awesome_icons/line_awesome_icons.dart';
@@ -66,7 +67,7 @@ class TransactionForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formBloc = BlocProvider.of<AllFieldsFormBloc>(ctx);
+    var formBloc = BlocProvider.of<AllFieldsFormBloc>(ctx);
     return FormBlocListener<AllFieldsFormBloc, String, String>(
       onSubmitting: (ctx, state) {},
       onSuccess: (ctx, state) {
@@ -74,11 +75,7 @@ class TransactionForm extends StatelessWidget {
             backgroundColor: Colors.greenAccent,
             content: Text('Transaction added successfully.')));
       },
-      onFailure: (ctx, state) {
-        // Scaffold.of(ctx).showSnackBar(SnackBar(
-        //     backgroundColor: Colors.redAccent,
-        //     content: Text('Failed to Sign in.')));
-      },
+      onFailure: (ctx, state) {},
       child: SingleChildScrollView(
         physics: ClampingScrollPhysics(),
         child: Padding(
@@ -112,11 +109,12 @@ class TransactionForm extends StatelessWidget {
                 itemBuilder: (ctx, item) => item,
               ),
               TextFieldBlocBuilder(
+                // suffixButton: SuffixButton.clearText,
                 autofocus: Platform.isWindows ? true : false,
                 focusNode: accountText,
                 nextFocusNode: subAccountText,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 130,
+                maxLength: 10,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -129,10 +127,11 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                // suffixButton: SuffixButton.clearText,
                 focusNode: subAccountText,
                 nextFocusNode: amount,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 130,
+                maxLength: 10,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -145,11 +144,15 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                inputFormatters: [
+                  DecimalFormatter(),
+                ],
+                // suffixButton: SuffixButton.clearText,
                 focusNode: amount,
                 nextFocusNode: descText,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
                 keyboardType: TextInputType.number,
-                maxLength: 30,
+                maxLength: 10,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -162,10 +165,11 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                // suffixButton: SuffixButton.clearText,
                 focusNode: descText,
                 nextFocusNode: submitBtn,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 200,
+                maxLength: 25,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -203,13 +207,19 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
     txn = txnIndex == null ? null : txnProvider.getAllTxns[txnIndex];
     accountText = TextFieldBloc(
       initialValue: txn == null ? '' : txn.accountHead,
-      suggestions: (_) => Future.value(txnProvider.accountList.toList()),
+      suggestions: (pattern) => Future.value(txnProvider.accountList
+          .where((element) =>
+              element.toUpperCase().contains(pattern.toUpperCase()))
+          .toList()),
     );
     subAccountText = TextFieldBloc(
-      suggestions: (_) {
+      suggestions: (pattern) {
         var subAccountList = txnProvider.subAccountList;
         subAccountList.remove('ALL');
-        return Future.value(subAccountList.toList());
+        return Future.value(subAccountList
+            .where((element) =>
+                element.toUpperCase().contains(pattern.toUpperCase()))
+            .toList());
       },
       initialValue: txn == null ? '' : txn.subAccountHead,
     );
@@ -260,7 +270,6 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       if (isError)
         emitFailure();
       else {
-        print(crOrDr.value.toString());
         if (txn == null)
           await repo.addTxn(TransactionsCompanion.insert(
             accountHead: accountText.value,
@@ -299,6 +308,44 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       }
     } catch (e) {
       emitFailure();
+    }
+  }
+}
+
+class DecimalFormatter extends TextInputFormatter {
+  bool isNumeric(String s) {
+    if (s == null) {
+      return false;
+    }
+
+    return double.parse(s, (e) => null) != null ||
+        int.parse(s, onError: (e) => null) != null;
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var selection = newValue.selection.baseOffset;
+    if (isNumeric(newValue.text)) {
+      var text;
+      if (newValue.text.contains('.')) {
+        text = newValue.text;
+      } else {
+        text = newValue.text + '.0';
+      }
+      return TextEditingValue(
+          selection:
+              TextSelection(extentOffset: selection, baseOffset: selection),
+          text: newValue.text == null ||
+                  newValue.text.isEmpty ||
+                  newValue.text == '.0'
+              ? ''
+              : text);
+    } else {
+      return TextEditingValue(
+          selection: TextSelection(
+              extentOffset: selection - 1, baseOffset: selection - 1),
+          text: oldValue.text);
     }
   }
 }

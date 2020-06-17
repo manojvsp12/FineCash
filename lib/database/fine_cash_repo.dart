@@ -33,7 +33,6 @@ class FineCashRepository extends _$FineCashRepository {
 
   void fetchAccounts() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
-    print(allTxnEntries);
     txnProvider.setAccountList(
         allTxnEntries.map((e) => e.accountHead.toUpperCase()).toSet());
   }
@@ -69,7 +68,6 @@ class FineCashRepository extends _$FineCashRepository {
     this.fetchAccounts();
     this.fetchSubAccounts();
     this.fetchAllTxns();
-    print(entry.accountHead.value);
     if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
       await addMetaData(MetaDatasCompanion.insert(
           accountHead: entry.accountHead.value.toUpperCase(),
@@ -121,7 +119,6 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     // put the database file, called db.sqlite here, into the documents folder
     // for your app.
-    print(await _localPath);
     final file = File(p.join(await _localPath, 'db.sqlite'));
     return VmDatabase(file, logStatements: true);
   });
