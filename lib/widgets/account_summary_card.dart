@@ -1,5 +1,4 @@
 import 'package:fine_cash/constants/constants.dart';
-import 'package:fine_cash/models/account_summary.dart';
 import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +10,10 @@ class AccountSummaryCard extends StatelessWidget {
   const AccountSummaryCard({
     Key key,
     this.itemIndex,
-    this.accountSummary,
     this.press,
   }) : super(key: key);
 
   final int itemIndex;
-  final AccountSummary accountSummary;
   final Function press;
 
   @override

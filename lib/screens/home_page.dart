@@ -5,10 +5,10 @@ import 'package:easy_permission_validator/easy_permission_validator.dart';
 import 'package:excel/excel.dart';
 import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
-import 'package:fine_cash/models/account_summary.dart';
 import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
+import 'package:fine_cash/utilities/preferences.dart';
 import 'package:fine_cash/widgets/account_summary_card.dart';
 import 'package:fine_cash/widgets/accounts_card.dart';
 import 'package:fine_cash/widgets/process_transaction.dart';
@@ -25,6 +25,7 @@ import 'package:provider/provider.dart';
 import 'package:slide_popup_dialog/slide_popup_dialog.dart' as slideDialog;
 
 ValueNotifier<int> currentIndex = ValueNotifier(0);
+ValueNotifier<bool> isSelected = ValueNotifier(false);
 final Set<int> selected = {};
 GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
 
@@ -75,7 +76,7 @@ class _HomePageState extends State<HomePage> {
       valueListenable: currentIndex,
       builder: (context, index, child) => Scaffold(
         key: _scaffoldKey,
-        appBar: buildAppBar(context, titles[index]),
+        appBar: _buildAppBar(context, titles[index]),
         backgroundColor: kPrimaryColor,
         body: AccountSummaryPage(currentIndex: index, repo: repo),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
@@ -174,90 +175,124 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  AppBar buildAppBar(BuildContext context, String title) {
+  AppBar _buildAppBar(BuildContext context, String title) {
     return AppBar(
+      automaticallyImplyLeading: false,
       backgroundColor: kBackgroundColor,
       elevation: 0,
       centerTitle: false,
-      title: Padding(
-        padding: const EdgeInsets.only(left: 150),
-        child: Center(
-          child: Text(
-            title.toUpperCase(),
-            style: Theme.of(context).textTheme.bodyText1,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: () {
+              if (currentIndex.value == 1) isSelected.value = !isSelected.value;
+            },
+            icon: Icon(Icons.select_all,
+                color: currentIndex.value == 1 ? Colors.black : Colors.grey),
           ),
-        ),
-      ),
-      actions: [
-        IconButton(
-          color: Colors.deepPurple,
-          icon: Icon(MdiIcons.sigma),
-          onPressed: () {
-            showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(10.0))),
-                      content: Builder(
-                        builder: (context) {
-                          double total = 0;
-                          try {
-                            total += txnProvider.allTxns
-                                .where((txn) =>
-                                    selected.contains(txn.id) &&
-                                    txn.credit != null)
-                                .map((e) => e.credit)
-                                .reduce((a, b) => a + b);
-                            total -= txnProvider.allTxns
-                                .where((txn) =>
-                                    selected.contains(txn.id) &&
-                                    txn.debit != null)
-                                .map((e) => e.debit)
-                                .reduce((a, b) => a + b);
-                          } on StateError {}
-                          return Container(
-                            height: MediaQuery.of(context).size.height / 5,
-                            width: MediaQuery.of(context).size.width / 5,
-                            child: Center(
-                              child: Text(
-                                total.toStringAsFixed(0),
-                                style: TextStyle(
-                                  fontFamily: 'OpenSans',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 50,
+          IconButton(
+            color: Colors.deepPurple,
+            icon: Icon(MdiIcons.sigma),
+            onPressed: () {
+              showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10.0))),
+                        content: Builder(
+                          builder: (context) {
+                            double total = 0;
+                            try {
+                              total += txnProvider.allTxns
+                                  .where((txn) =>
+                                      selected.contains(txn.id) &&
+                                      txn.credit != null)
+                                  .map((e) => e.credit)
+                                  .reduce((a, b) => a + b);
+                              total -= txnProvider.allTxns
+                                  .where((txn) =>
+                                      selected.contains(txn.id) &&
+                                      txn.debit != null)
+                                  .map((e) => e.debit)
+                                  .reduce((a, b) => a + b);
+                            } on StateError {}
+                            return Container(
+                              height: MediaQuery.of(context).size.height / 5,
+                              width: MediaQuery.of(context).size.width / 5,
+                              child: Center(
+                                child: Text(
+                                  total.toStringAsFixed(0),
+                                  style: TextStyle(
+                                    fontFamily: 'OpenSans',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 50,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-                    ));
-          },
-        ),
-        IconButton(
-          color: Colors.redAccent,
-          icon: Icon(Icons.delete_forever),
-          onPressed: () {
-            repo.deleteTxn(selected);
-            selected.clear();
-            _scaffoldKey.currentState.showSnackBar(
-              SnackBar(
-                backgroundColor: Colors.redAccent,
-                content: Text('Transaction(s) deleted.'),
-              ),
-            );
-          },
-        ),
-        IconButton(
-          color: kPrimaryColor,
-          icon: Icon(Icons.exit_to_app),
-          onPressed: () {
-            widget.onLogout(context);
-            repo.clearDB();
-          },
-        ),
-      ],
+                            );
+                          },
+                        ),
+                      ));
+            },
+          ),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Center(
+            child: Text(
+              title.toUpperCase(),
+              style: Theme.of(context).textTheme.bodyText1,
+            ),
+          ),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          Container(),
+          IconButton(
+            color: Colors.redAccent,
+            icon: Icon(Icons.delete_forever),
+            onPressed: () {
+              repo.deleteTxn(selected);
+              selected.clear();
+              _scaffoldKey.currentState.showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.redAccent,
+                  content: Text('Transaction(s) deleted.'),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            color: kPrimaryColor,
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () {
+              widget.onLogout(context);
+              repo.clearDB();
+            },
+          ),
+        ],
+      ),
+      actions: [],
     );
   }
 }
@@ -318,7 +353,6 @@ class AccountSummaryPage extends StatelessWidget {
           children: <Widget>[
             AccountSummaryCard(
               itemIndex: 0,
-              accountSummary: AccountSummary('0', '0', '0'),
               press: () {},
             ),
             SizedBox(
@@ -427,6 +461,7 @@ class AccountSummaryPage extends StatelessWidget {
               itemCount: getAllTxns().length,
               physics: ClampingScrollPhysics(),
               itemBuilder: (context, index) => TransactionCard(
+                isSelected: isSelected,
                 txn: getAllTxns()[index],
                 onSelected: () {
                   selected.add(getAllTxns()[index].id);
@@ -708,10 +743,6 @@ class _ReportFormBloc extends FormBloc<String, String> {
         debit,
         (credit - debit).toStringAsFixed(2),
       ], reportList.length + 2);
-      sheet
-          .cell(CellIndex.indexByColumnRow(
-              rowIndex: reportList.length + 1, columnIndex: 6))
-          .cellStyle = style;
       excel.setDefaultSheet('Report');
       excel.encode().then((value) => File(p.join(_localFile))
         ..createSync(recursive: true)
@@ -738,16 +769,16 @@ class _ReportFormBloc extends FormBloc<String, String> {
   }
 
   String get _localFile {
-    String reportPath = '/storage/emulated/0/Download';
     if (Platform.isWindows) {
-      var dir = new Directory('$reportPath\\FineCash\\Reports');
+      var dir = new Directory('$localPath\\FineCash\\Reports');
       if (dir.existsSync())
-        return '$reportPath\\FineCash\\Reports\\' + _getFileName();
+        return '$localPath\\FineCash\\Reports\\' + _getFileName();
       else {
-        new Directory('$reportPath\\FineCash\\Reports').createSync();
-        return '$reportPath\\FineCash\\Reports\\' + _getFileName();
+        new Directory('$localPath\\FineCash\\Reports').createSync();
+        return '$localPath\\FineCash\\Reports\\' + _getFileName();
       }
     } else {
+      String reportPath = '/storage/emulated/0/Download';
       var rootDir = new Directory('$reportPath/FineCash');
       if (!rootDir.existsSync())
         new Directory('$reportPath/FineCash').createSync();
