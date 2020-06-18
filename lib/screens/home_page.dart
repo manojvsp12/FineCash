@@ -580,7 +580,7 @@ class AccountSummaryPage extends StatelessWidget {
                           helperText: 'Report End Date',
                         ),
                       ),
-                      _buildLoginBtn(formBloc.submit),
+                      _buildReportBtn(formBloc.submit),
                       Container(),
                       Container(),
                       Container(),
@@ -807,7 +807,7 @@ class _ReportFormBloc extends FormBloc<String, String> {
   }
 }
 
-Widget _buildLoginBtn(Function submit) {
+Widget _buildReportBtn(Function submit) {
   return Container(
       padding: EdgeInsets.symmetric(vertical: 25.0),
       width: double.infinity,
