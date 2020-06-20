@@ -4,6 +4,7 @@ import 'package:fine_cash/constants/constants.dart';
 import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
+import 'package:flutter_screen_scaler/flutter_screen_scaler.dart';
 
 class TransactionCard extends StatelessWidget {
   TransactionCard({
@@ -13,6 +14,7 @@ class TransactionCard extends StatelessWidget {
     this.isSelected,
     this.onSelected,
     this.onDeselected,
+    this.isSync,
   }) : super(key: key);
 
   final Transaction txn;
@@ -22,10 +24,11 @@ class TransactionCard extends StatelessWidget {
   final Function onDeselected;
   final ValueNotifier color = ValueNotifier(Colors.white);
   bool selected = false;
+  final bool isSync;
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    ScreenScaler scaler = ScreenScaler()..init(context);
     var getTxnColor = txn.credit == null ? Colors.redAccent : Colors.green;
     return ValueListenableBuilder(
       valueListenable: isSelected,
@@ -44,9 +47,9 @@ class TransactionCard extends StatelessWidget {
             vertical: kDefaultPadding / 3,
           ),
           child: InkWell(
-            onDoubleTap: _processSelection,
-            onLongPress: _processSelection,
-            onTap: press,
+            onDoubleTap: isSync ? () {} : _processSelection,
+            onLongPress: isSync ? () {} : _processSelection,
+            onTap: isSync ? () {} : press,
             child: Stack(
               alignment: Alignment.bottomCenter,
               children: <Widget>[
@@ -54,7 +57,7 @@ class TransactionCard extends StatelessWidget {
                   valueListenable: color,
                   builder: (context, value, child) => Container(
                     // width: MediaQuery.of(context).size.width / 3,
-                    height: 100,
+                    height: scaler.getHeight(9),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(22),
                       color: getTxnColor,
@@ -77,7 +80,7 @@ class TransactionCard extends StatelessWidget {
                   child: Container(
                     color: Colors.transparent,
                     padding: EdgeInsets.symmetric(horizontal: kDefaultPadding),
-                    height: 160,
+                    // height: 160,
                     width: Platform.isWindows ? 300 : 200,
                     child: Center(
                       child: RichText(
@@ -86,7 +89,7 @@ class TransactionCard extends StatelessWidget {
                           style: TextStyle(
                               color: getTxnColor,
                               fontWeight: FontWeight.bold,
-                              fontSize: Platform.isWindows ? 25 : 12),
+                              fontSize: Platform.isWindows ? 25 : scaler.getWidth(3)),
                           children: [
                             TextSpan(
                                 text: txn.credit == null
@@ -95,7 +98,7 @@ class TransactionCard extends StatelessWidget {
                                 style: TextStyle(
                                     color: getTxnColor,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: Platform.isWindows ? 40 : 18)),
+                                    fontSize: Platform.isWindows ? 40 : scaler.getWidth(4))),
                           ],
                         ),
                       ),
@@ -107,8 +110,8 @@ class TransactionCard extends StatelessWidget {
                   // left: MediaQuery.of(context).size.width / 3.19,
                   left: 0,
                   child: SizedBox(
-                    height: 136,
-                    width: size.width,
+                    height: scaler.getHeight(10),
+                    width: scaler.getWidth(80),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -122,7 +125,7 @@ class TransactionCard extends StatelessWidget {
                               style: TextStyle(
                                   color: kTextLightColor,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: Platform.isWindows ? 18 : 15),
+                                  fontSize: Platform.isWindows ? 18 : scaler.getWidth(2)),
                               children: [
                                 TextSpan(
                                     text: Platform.isWindows ? '|' : '\n',
@@ -133,7 +136,7 @@ class TransactionCard extends StatelessWidget {
                                   style: TextStyle(
                                       color: kTextLightColor,
                                       fontWeight: FontWeight.w600,
-                                      fontSize: Platform.isWindows ? 16 : 14),
+                                      fontSize: Platform.isWindows ? 16 : scaler.getWidth(1.9)),
                                 ),
                                 TextSpan(text: '\n'),
                                 if (txn.desc.isNotEmpty)
@@ -143,7 +146,7 @@ class TransactionCard extends StatelessWidget {
                                           color: kTextLightColor,
                                           fontWeight: FontWeight.w600,
                                           fontSize:
-                                              Platform.isWindows ? 15 : 13)),
+                                              Platform.isWindows ? 15 : scaler.getWidth(1.8))),
                                 if (txn.desc.isNotEmpty)
                                   TextSpan(
                                       text: txn.desc,
@@ -151,13 +154,10 @@ class TransactionCard extends StatelessWidget {
                                           color: kTextLightColor,
                                           fontWeight: FontWeight.w600,
                                           fontSize:
-                                              Platform.isWindows ? 15 : 13)),
+                                              Platform.isWindows ? 15 : scaler.getWidth(1.8))),
                               ],
                             ),
                           ),
-                        ),
-                        SizedBox(
-                          height: 10,
                         ),
                         Container(
                           padding: EdgeInsets.symmetric(

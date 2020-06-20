@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fine_cash/database/fine_cash_repo.dart';
+import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,26 +9,28 @@ import 'package:flutter/services.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:moor/moor.dart' as moor;
 import 'package:line_awesome_icons/line_awesome_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 class ProcessTransaction extends StatelessWidget {
   final BuildContext context;
   final FineCashRepository repo;
   final TxnProvider txnProvider;
-  final int txnIndex;
+  final Transaction txn;
   final FocusNode submitBtn = FocusNode();
   ProcessTransaction(
-      {Key key, this.context, this.repo, this.txnProvider, this.txnIndex})
+      {Key key, this.context, this.repo, this.txnProvider, this.txn})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          AllFieldsFormBloc(context, repo, txnProvider, txnIndex),
+      create: (context) => AllFieldsFormBloc(context, repo, txnProvider, txn),
       child: Builder(
         builder: (context) {
           return Expanded(
             child: Scaffold(
+              resizeToAvoidBottomInset: false,
               body: TransactionForm(context, submitBtn),
               floatingActionButton: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -67,6 +70,7 @@ class TransactionForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    FilterProvider filter = Provider.of<FilterProvider>(context, listen: false);
     var formBloc = BlocProvider.of<AllFieldsFormBloc>(ctx);
     return FormBlocListener<AllFieldsFormBloc, String, String>(
       onSubmitting: (ctx, state) {},
@@ -77,7 +81,7 @@ class TransactionForm extends StatelessWidget {
       },
       onFailure: (ctx, state) {},
       child: SingleChildScrollView(
-        physics: ClampingScrollPhysics(),
+        // physics: ClampingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -90,7 +94,7 @@ class TransactionForm extends StatelessWidget {
                 canSelectTime: true,
                 format: DateFormat('dd-MM-yyyy  hh:mm a'),
                 initialDate: DateTime.now(),
-                firstDate: DateTime(1900),
+                firstDate: DateTime(2010),
                 lastDate: DateTime(2100),
                 decoration: InputDecoration(
                   labelText: 'Date and Time',
@@ -110,7 +114,9 @@ class TransactionForm extends StatelessWidget {
               ),
               TextFieldBlocBuilder(
                 // suffixButton: SuffixButton.clearText,
-                autofocus: Platform.isWindows ? true : false,
+                autofocus: filter.acctFilter.isEmpty
+                    ? Platform.isWindows ? true : false
+                    : false,
                 focusNode: accountText,
                 nextFocusNode: subAccountText,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
@@ -127,6 +133,9 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                autofocus: filter.subAcctFilter.isEmpty
+                    ? Platform.isWindows ? true : false
+                    : false,
                 // suffixButton: SuffixButton.clearText,
                 focusNode: subAccountText,
                 nextFocusNode: amount,
@@ -144,6 +153,10 @@ class TransactionForm extends StatelessWidget {
                 ),
               ),
               TextFieldBlocBuilder(
+                autofocus: filter.subAcctFilter.isNotEmpty &&
+                        filter.acctFilter.isNotEmpty
+                    ? Platform.isWindows ? true : false
+                    : false,
                 inputFormatters: [
                   DecimalFormatter(),
                 ],
@@ -193,7 +206,7 @@ class TransactionForm extends StatelessWidget {
 class AllFieldsFormBloc extends FormBloc<String, String> {
   final BuildContext context;
   final FineCashRepository repo;
-  final int txnIndex;
+  final Transaction txn;
   TxnProvider txnProvider;
   TextFieldBloc accountText;
   TextFieldBloc subAccountText;
@@ -201,12 +214,13 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
   TextFieldBloc amount;
   InputFieldBloc<DateTime, Object> dateAndTime;
   SelectFieldBloc<String, dynamic> crOrDr;
-  Transaction txn;
 
-  AllFieldsFormBloc(this.context, this.repo, this.txnProvider, this.txnIndex) {
-    txn = txnIndex == null ? null : txnProvider.getAllTxns[txnIndex];
+  AllFieldsFormBloc(this.context, this.repo, this.txnProvider, this.txn) {
+    FilterProvider filter = Provider.of<FilterProvider>(context, listen: false);
     accountText = TextFieldBloc(
-      initialValue: txn == null ? '' : txn.accountHead,
+      initialValue: txn == null
+          ? filter.acctFilter.isEmpty ? '' : filter.acctFilter.elementAt(0)
+          : txn.accountHead,
       suggestions: (pattern) => Future.value(txnProvider.accountList
           .where((element) =>
               element.toUpperCase().contains(pattern.toUpperCase()))
@@ -221,7 +235,11 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
                 element.toUpperCase().contains(pattern.toUpperCase()))
             .toList());
       },
-      initialValue: txn == null ? '' : txn.subAccountHead,
+      initialValue: txn == null
+          ? filter.subAcctFilter.isEmpty
+              ? ''
+              : filter.subAcctFilter.elementAt(0)
+          : txn.subAccountHead,
     );
     descText = TextFieldBloc(
       initialValue: txn == null ? '' : txn.desc,
@@ -272,6 +290,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
       else {
         if (txn == null)
           await repo.addTxn(TransactionsCompanion.insert(
+            id: Uuid().v4(),
             accountHead: accountText.value,
             subAccountHead: moor.Value(subAccountText.value),
             credit: crOrDr.value.toString() == 'Credit'
@@ -285,7 +304,9 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
           ));
         else
           await repo.updateTxn(TransactionsCompanion.insert(
-            id: moor.Value(txn.id),
+            isSynced: moor.Value(false),
+            isUpdated: moor.Value(true),
+            id: txn.id,
             createdDTime: moor.Value(dateAndTime.value),
             accountHead: accountText.value,
             subAccountHead: moor.Value(subAccountText.value),
@@ -307,6 +328,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
             InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
       }
     } catch (e) {
+      print(e);
       emitFailure();
     }
   }

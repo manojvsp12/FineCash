@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:fine_cash/database/fine_cash_repo.dart';
 import 'package:fine_cash/database/remote_db.dart';
 import 'package:fine_cash/providers/filter_provider.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/screens/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:window_size/window_size.dart';
 import './screens/login_page.dart';
+import 'providers/fine_cash_repo_provider.dart';
 import 'providers/login_provider.dart';
 import 'providers/txn_provider.dart';
 import 'utilities/preferences.dart';
@@ -15,6 +18,8 @@ import 'utilities/security.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   Future.delayed(Duration.zero).then((finish) async {
     if (Platform.isWindows) {
       PlatformWindow window = await getWindowInfo();
@@ -51,40 +56,48 @@ class MyApp extends StatelessWidget {
           },
         ));
   }
-}
 
-onLogout(context) {
-  Navigator.popAndPushNamed(context, '/loginscreen');
-  var auth = Provider.of<LoginProvider>(context, listen: false);
-  auth.isAuth = false;
-  auth.username = '';
-  auth.pwd = '';
-  write({"isAuth": false});
-}
+  onLogout(context) {
+    Navigator.popAndPushNamed(context, '/loginscreen');
+    var auth = Provider.of<LoginProvider>(context, listen: false);
+    auth.isAuth = false;
+    auth.username = '';
+    auth.pwd = '';
+    write({"isAuth": false});
+  }
 
-onLogin(context, key, username, pwd) async {
-  var auth = Provider.of<LoginProvider>(context, listen: false);
-  try {
-    auth.isAuth = true;
-    auth.username = username;
-    auth.pwd = pwd;
-    await connectdb();
-    await fetchUsers();
-    auth.message = 'SIGNING IN...';
-    auth.isAuth = authenticate(auth.username, auth.pwd);
-    if (auth.isAuth) {
-      auth.message = 'SYNCING TRANSACTIONS...';
-      await syncTxns();
-      Navigator.popAndPushNamed(context, '/homescreen');
-    } else {
+  onLogin(context, key, username, pwd) async {
+    var auth = Provider.of<LoginProvider>(context, listen: false);
+    var txnProvider = Provider.of<TxnProvider>(context, listen: false);
+    var metaDataProvider =
+        Provider.of<MetaDataProvider>(context, listen: false);
+    if (repo == null) repo = FineCashRepository(txnProvider, metaDataProvider);
+    try {
+      auth.isAuth = true;
+      auth.username = username;
+      auth.pwd = pwd;
+      await connectdb();
+      await fetchUsers();
+      auth.message = 'SIGNING IN...';
+      auth.isAuth = authenticate(auth.username, auth.pwd);
+      if (auth.isAuth) {
+        auth.message = 'SYNCING TRANSACTIONS...';
+        var status = await syncTxns(txnProvider, repo);
+        Navigator.popAndPushNamed(context, '/homescreen');
+        if (!status)
+          key.currentState.showSnackBar(SnackBar(
+              backgroundColor: Colors.redAccent,
+              content: Text('Failed to Sync data.')));
+      } else {
+        key.currentState.showSnackBar(SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('Failed to Sign in.')));
+      }
+    } catch (e) {
+      auth.isAuth = false;
       key.currentState.showSnackBar(SnackBar(
           backgroundColor: Colors.redAccent,
-          content: Text('Failed to Sign in.')));
+          content: Text('Failed to connect to DB.')));
     }
-  } catch (e) {
-    auth.isAuth = false;
-    key.currentState.showSnackBar(SnackBar(
-        backgroundColor: Colors.redAccent,
-        content: Text('Failed to connect to DB.')));
   }
 }

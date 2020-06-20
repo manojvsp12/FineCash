@@ -2,7 +2,7 @@ import 'package:fine_cash/utilities/preferences.dart';
 import 'package:moor/moor.dart';
 
 class Transactions extends Table {
-  IntColumn get id => integer().autoIncrement()();
+  TextColumn get id => text()();
   TextColumn get accountHead => text()();
   TextColumn get subAccountHead => text().nullable()();
   TextColumn get desc => text().nullable()();
@@ -12,4 +12,9 @@ class Transactions extends Table {
       dateTime().withDefault(currentDateAndTime)();
   BoolColumn get isSynced => boolean().withDefault(Constant(false))();
   TextColumn get txnOwner => text().clientDefault(() => user)();
+  BoolColumn get isUpdated => boolean().withDefault(Constant(false))();
+  BoolColumn get isDeleted => boolean().withDefault(Constant(false))();
+
+@override 
+ Set<Column> get primaryKey => {id};
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screen_scaler/flutter_screen_scaler.dart';
 
 class AccountsCard extends StatelessWidget {
   final Function onPressed;
@@ -11,11 +12,12 @@ class AccountsCard extends StatelessWidget {
       : super(key: key);
   @override
   Widget build(BuildContext context) {
+    ScreenScaler scaler = ScreenScaler()..init(context);
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onPressed,
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.1,
+        height: scaler.getHeight(10),
         width: MediaQuery.of(context).size.width * 0.22,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -33,17 +35,17 @@ class AccountsCard extends StatelessWidget {
           children: <Widget>[
             Icon(
               icon,
-              size: 50,
+              size: scaler.getHeight(5),
               color: color,
             ),
             SizedBox(
-              height: 10,
+              height: scaler.getHeight(1),
             ),
             FittedBox(
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.headline6.copyWith(
-                      fontSize: 15,
+                      fontSize: scaler.getHeight(1),
                     ),
               ),
             ),

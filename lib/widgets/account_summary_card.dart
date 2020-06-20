@@ -23,17 +23,16 @@ class AccountSummaryCard extends StatelessWidget {
     ScreenScaler scaler = new ScreenScaler()..init(context);
     return Container(
       margin: EdgeInsets.symmetric(
-        horizontal: kDefaultPadding,
-        vertical: kDefaultPadding / 100,
+        horizontal: 20,
       ),
-      height: 160,
+      height: scaler.getHeight(15),
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: <Widget>[
           Container(
             height: 136,
             child: Container(
-              margin: EdgeInsets.only(right: 10),
+              // margin: EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(22),
@@ -48,7 +47,7 @@ class AccountSummaryCard extends StatelessWidget {
                 text: TextSpan(
                   text: _acctSummaryTitle(filterProvider),
                   style: Theme.of(context).textTheme.bodyText1.copyWith(
-                        fontSize: 14,
+                        fontSize: scaler.getHeight(1),
                       ),
                   children: [
                     TextSpan(
@@ -56,7 +55,7 @@ class AccountSummaryCard extends StatelessWidget {
                           getBalance(txnProvider, filterProvider)
                               .toStringAsFixed(2),
                       style: Theme.of(context).textTheme.bodyText1.copyWith(
-                            fontSize: 20,
+                            fontSize: scaler.getHeight(1.2),
                           ),
                     ),
                   ],
@@ -77,7 +76,7 @@ class AccountSummaryCard extends StatelessWidget {
                       text: TextSpan(
                         text: 'CREDIT',
                         style: Theme.of(context).textTheme.bodyText1.copyWith(
-                              fontSize: 14,
+                              fontSize: scaler.getHeight(1),
                             ),
                         children: [
                           TextSpan(
@@ -86,7 +85,7 @@ class AccountSummaryCard extends StatelessWidget {
                                     .toStringAsFixed(2),
                             style:
                                 Theme.of(context).textTheme.bodyText1.copyWith(
-                                      fontSize: 20,
+                                      fontSize: scaler.getHeight(1.2),
                                     ),
                           ),
                         ],
@@ -102,7 +101,7 @@ class AccountSummaryCard extends StatelessWidget {
                       text: TextSpan(
                         text: 'DEBIT',
                         style: Theme.of(context).textTheme.bodyText1.copyWith(
-                              fontSize: 14,
+                              fontSize: scaler.getHeight(1),
                             ),
                         children: [
                           TextSpan(
@@ -111,7 +110,7 @@ class AccountSummaryCard extends StatelessWidget {
                                     .toStringAsFixed(2),
                             style:
                                 Theme.of(context).textTheme.bodyText1.copyWith(
-                                      fontSize: 20,
+                                      fontSize: scaler.getHeight(1.2),
                                     ),
                           ),
                         ],
@@ -170,11 +169,10 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.credit != null &&
-              e.createdDTime.month == DateTime.now().month 
-              &&
-              filterProvider.acctFilter.contains(e.accountHead.toUpperCase())
-              )
+              e.createdDTime.month == DateTime.now().month &&
+              filterProvider.acctFilter.contains(e.accountHead.toUpperCase()))
           .map((e) => e.credit)
           .toList();
       return list.length > 1
@@ -186,6 +184,7 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isNotEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.credit != null &&
               e.createdDTime.month == DateTime.now().month &&
               filterProvider.subAcctFilter
@@ -201,6 +200,7 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isNotEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.credit != null &&
               e.createdDTime.month == DateTime.now().month &&
               filterProvider.acctFilter.contains(e.accountHead.toUpperCase()) &&
@@ -215,7 +215,9 @@ class AccountSummaryCard extends StatelessWidget {
 
     var list = txnProvider.allTxns
         .where((e) =>
-            e.credit != null && e.createdDTime.month == DateTime.now().month)
+            !e.isDeleted &&
+            e.credit != null &&
+            e.createdDTime.month == DateTime.now().month)
         .map((e) => e.credit)
         .toList();
     return list.length > 1
@@ -228,6 +230,7 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.debit != null &&
               e.createdDTime.month == DateTime.now().month &&
               filterProvider.acctFilter.contains(e.accountHead.toUpperCase()))
@@ -242,6 +245,7 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isNotEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.debit != null &&
               e.createdDTime.month == DateTime.now().month &&
               filterProvider.subAcctFilter
@@ -257,6 +261,7 @@ class AccountSummaryCard extends StatelessWidget {
         filterProvider.subAcctFilter.isNotEmpty) {
       var list = txnProvider.allTxns
           .where((e) =>
+              !e.isDeleted &&
               e.debit != null &&
               e.createdDTime.month == DateTime.now().month &&
               filterProvider.acctFilter.contains(e.accountHead.toUpperCase()) &&
@@ -271,7 +276,9 @@ class AccountSummaryCard extends StatelessWidget {
 
     var list = txnProvider.allTxns
         .where((e) =>
-            e.debit != null && e.createdDTime.month == DateTime.now().month)
+            !e.isDeleted &&
+            e.debit != null &&
+            e.createdDTime.month == DateTime.now().month)
         .map((e) => e.debit)
         .toList();
     return list.length > 1

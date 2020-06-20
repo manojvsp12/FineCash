@@ -8,7 +8,7 @@ part of 'fine_cash_repo.dart';
 
 // ignore_for_file: unnecessary_brace_in_string_interps, unnecessary_this
 class Transaction extends DataClass implements Insertable<Transaction> {
-  final int id;
+  final String id;
   final String accountHead;
   final String subAccountHead;
   final String desc;
@@ -17,6 +17,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final DateTime createdDTime;
   final bool isSynced;
   final String txnOwner;
+  final bool isUpdated;
+  final bool isDeleted;
   Transaction(
       {@required this.id,
       @required this.accountHead,
@@ -26,17 +28,18 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       this.debit,
       @required this.createdDTime,
       @required this.isSynced,
-      @required this.txnOwner});
+      @required this.txnOwner,
+      @required this.isUpdated,
+      @required this.isDeleted});
   factory Transaction.fromData(Map<String, dynamic> data, GeneratedDatabase db,
       {String prefix}) {
     final effectivePrefix = prefix ?? '';
-    final intType = db.typeSystem.forDartType<int>();
     final stringType = db.typeSystem.forDartType<String>();
     final doubleType = db.typeSystem.forDartType<double>();
     final dateTimeType = db.typeSystem.forDartType<DateTime>();
     final boolType = db.typeSystem.forDartType<bool>();
     return Transaction(
-      id: intType.mapFromDatabaseResponse(data['${effectivePrefix}id']),
+      id: stringType.mapFromDatabaseResponse(data['${effectivePrefix}id']),
       accountHead: stringType
           .mapFromDatabaseResponse(data['${effectivePrefix}account_head']),
       subAccountHead: stringType
@@ -52,13 +55,17 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           boolType.mapFromDatabaseResponse(data['${effectivePrefix}is_synced']),
       txnOwner: stringType
           .mapFromDatabaseResponse(data['${effectivePrefix}txn_owner']),
+      isUpdated: boolType
+          .mapFromDatabaseResponse(data['${effectivePrefix}is_updated']),
+      isDeleted: boolType
+          .mapFromDatabaseResponse(data['${effectivePrefix}is_deleted']),
     );
   }
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (!nullToAbsent || id != null) {
-      map['id'] = Variable<int>(id);
+      map['id'] = Variable<String>(id);
     }
     if (!nullToAbsent || accountHead != null) {
       map['account_head'] = Variable<String>(accountHead);
@@ -83,6 +90,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     }
     if (!nullToAbsent || txnOwner != null) {
       map['txn_owner'] = Variable<String>(txnOwner);
+    }
+    if (!nullToAbsent || isUpdated != null) {
+      map['is_updated'] = Variable<bool>(isUpdated);
+    }
+    if (!nullToAbsent || isDeleted != null) {
+      map['is_deleted'] = Variable<bool>(isDeleted);
     }
     return map;
   }
@@ -110,6 +123,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       txnOwner: txnOwner == null && nullToAbsent
           ? const Value.absent()
           : Value(txnOwner),
+      isUpdated: isUpdated == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isUpdated),
+      isDeleted: isDeleted == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isDeleted),
     );
   }
 
@@ -117,7 +136,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       {ValueSerializer serializer}) {
     serializer ??= moorRuntimeOptions.defaultSerializer;
     return Transaction(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       accountHead: serializer.fromJson<String>(json['accountHead']),
       subAccountHead: serializer.fromJson<String>(json['subAccountHead']),
       desc: serializer.fromJson<String>(json['desc']),
@@ -126,13 +145,15 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       createdDTime: serializer.fromJson<DateTime>(json['createdDTime']),
       isSynced: serializer.fromJson<bool>(json['isSynced']),
       txnOwner: serializer.fromJson<String>(json['txnOwner']),
+      isUpdated: serializer.fromJson<bool>(json['isUpdated']),
+      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer serializer}) {
     serializer ??= moorRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'accountHead': serializer.toJson<String>(accountHead),
       'subAccountHead': serializer.toJson<String>(subAccountHead),
       'desc': serializer.toJson<String>(desc),
@@ -141,11 +162,13 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'createdDTime': serializer.toJson<DateTime>(createdDTime),
       'isSynced': serializer.toJson<bool>(isSynced),
       'txnOwner': serializer.toJson<String>(txnOwner),
+      'isUpdated': serializer.toJson<bool>(isUpdated),
+      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
   Transaction copyWith(
-          {int id,
+          {String id,
           String accountHead,
           String subAccountHead,
           String desc,
@@ -153,7 +176,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           double debit,
           DateTime createdDTime,
           bool isSynced,
-          String txnOwner}) =>
+          String txnOwner,
+          bool isUpdated,
+          bool isDeleted}) =>
       Transaction(
         id: id ?? this.id,
         accountHead: accountHead ?? this.accountHead,
@@ -164,6 +189,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         createdDTime: createdDTime ?? this.createdDTime,
         isSynced: isSynced ?? this.isSynced,
         txnOwner: txnOwner ?? this.txnOwner,
+        isUpdated: isUpdated ?? this.isUpdated,
+        isDeleted: isDeleted ?? this.isDeleted,
       );
   @override
   String toString() {
@@ -176,7 +203,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('debit: $debit, ')
           ..write('createdDTime: $createdDTime, ')
           ..write('isSynced: $isSynced, ')
-          ..write('txnOwner: $txnOwner')
+          ..write('txnOwner: $txnOwner, ')
+          ..write('isUpdated: $isUpdated, ')
+          ..write('isDeleted: $isDeleted')
           ..write(')'))
         .toString();
   }
@@ -197,7 +226,11 @@ class Transaction extends DataClass implements Insertable<Transaction> {
                           $mrjc(
                               createdDTime.hashCode,
                               $mrjc(
-                                  isSynced.hashCode, txnOwner.hashCode)))))))));
+                                  isSynced.hashCode,
+                                  $mrjc(
+                                      txnOwner.hashCode,
+                                      $mrjc(isUpdated.hashCode,
+                                          isDeleted.hashCode)))))))))));
   @override
   bool operator ==(dynamic other) =>
       identical(this, other) ||
@@ -210,11 +243,13 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.debit == this.debit &&
           other.createdDTime == this.createdDTime &&
           other.isSynced == this.isSynced &&
-          other.txnOwner == this.txnOwner);
+          other.txnOwner == this.txnOwner &&
+          other.isUpdated == this.isUpdated &&
+          other.isDeleted == this.isDeleted);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> accountHead;
   final Value<String> subAccountHead;
   final Value<String> desc;
@@ -223,6 +258,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<DateTime> createdDTime;
   final Value<bool> isSynced;
   final Value<String> txnOwner;
+  final Value<bool> isUpdated;
+  final Value<bool> isDeleted;
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.accountHead = const Value.absent(),
@@ -233,9 +270,11 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.createdDTime = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.txnOwner = const Value.absent(),
+    this.isUpdated = const Value.absent(),
+    this.isDeleted = const Value.absent(),
   });
   TransactionsCompanion.insert({
-    this.id = const Value.absent(),
+    @required String id,
     @required String accountHead,
     this.subAccountHead = const Value.absent(),
     this.desc = const Value.absent(),
@@ -244,9 +283,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.createdDTime = const Value.absent(),
     this.isSynced = const Value.absent(),
     this.txnOwner = const Value.absent(),
-  }) : accountHead = Value(accountHead);
+    this.isUpdated = const Value.absent(),
+    this.isDeleted = const Value.absent(),
+  })  : id = Value(id),
+        accountHead = Value(accountHead);
   static Insertable<Transaction> custom({
-    Expression<int> id,
+    Expression<String> id,
     Expression<String> accountHead,
     Expression<String> subAccountHead,
     Expression<String> desc,
@@ -255,6 +297,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<DateTime> createdDTime,
     Expression<bool> isSynced,
     Expression<String> txnOwner,
+    Expression<bool> isUpdated,
+    Expression<bool> isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -266,11 +310,13 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (createdDTime != null) 'created_d_time': createdDTime,
       if (isSynced != null) 'is_synced': isSynced,
       if (txnOwner != null) 'txn_owner': txnOwner,
+      if (isUpdated != null) 'is_updated': isUpdated,
+      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
   TransactionsCompanion copyWith(
-      {Value<int> id,
+      {Value<String> id,
       Value<String> accountHead,
       Value<String> subAccountHead,
       Value<String> desc,
@@ -278,7 +324,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       Value<double> debit,
       Value<DateTime> createdDTime,
       Value<bool> isSynced,
-      Value<String> txnOwner}) {
+      Value<String> txnOwner,
+      Value<bool> isUpdated,
+      Value<bool> isDeleted}) {
     return TransactionsCompanion(
       id: id ?? this.id,
       accountHead: accountHead ?? this.accountHead,
@@ -289,6 +337,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       createdDTime: createdDTime ?? this.createdDTime,
       isSynced: isSynced ?? this.isSynced,
       txnOwner: txnOwner ?? this.txnOwner,
+      isUpdated: isUpdated ?? this.isUpdated,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -296,7 +346,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (accountHead.present) {
       map['account_head'] = Variable<String>(accountHead.value);
@@ -322,6 +372,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (txnOwner.present) {
       map['txn_owner'] = Variable<String>(txnOwner.value);
     }
+    if (isUpdated.present) {
+      map['is_updated'] = Variable<bool>(isUpdated.value);
+    }
+    if (isDeleted.present) {
+      map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
     return map;
   }
 }
@@ -332,12 +388,15 @@ class $TransactionsTable extends Transactions
   final String _alias;
   $TransactionsTable(this._db, [this._alias]);
   final VerificationMeta _idMeta = const VerificationMeta('id');
-  GeneratedIntColumn _id;
+  GeneratedTextColumn _id;
   @override
-  GeneratedIntColumn get id => _id ??= _constructId();
-  GeneratedIntColumn _constructId() {
-    return GeneratedIntColumn('id', $tableName, false,
-        hasAutoIncrement: true, declaredAsPrimaryKey: true);
+  GeneratedTextColumn get id => _id ??= _constructId();
+  GeneratedTextColumn _constructId() {
+    return GeneratedTextColumn(
+      'id',
+      $tableName,
+      false,
+    );
   }
 
   final VerificationMeta _accountHeadMeta =
@@ -436,6 +495,24 @@ class $TransactionsTable extends Transactions
     )..clientDefault = () => user;
   }
 
+  final VerificationMeta _isUpdatedMeta = const VerificationMeta('isUpdated');
+  GeneratedBoolColumn _isUpdated;
+  @override
+  GeneratedBoolColumn get isUpdated => _isUpdated ??= _constructIsUpdated();
+  GeneratedBoolColumn _constructIsUpdated() {
+    return GeneratedBoolColumn('is_updated', $tableName, false,
+        defaultValue: Constant(false));
+  }
+
+  final VerificationMeta _isDeletedMeta = const VerificationMeta('isDeleted');
+  GeneratedBoolColumn _isDeleted;
+  @override
+  GeneratedBoolColumn get isDeleted => _isDeleted ??= _constructIsDeleted();
+  GeneratedBoolColumn _constructIsDeleted() {
+    return GeneratedBoolColumn('is_deleted', $tableName, false,
+        defaultValue: Constant(false));
+  }
+
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -446,7 +523,9 @@ class $TransactionsTable extends Transactions
         debit,
         createdDTime,
         isSynced,
-        txnOwner
+        txnOwner,
+        isUpdated,
+        isDeleted
       ];
   @override
   $TransactionsTable get asDslTable => this;
@@ -461,6 +540,8 @@ class $TransactionsTable extends Transactions
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id'], _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('account_head')) {
       context.handle(
@@ -501,6 +582,14 @@ class $TransactionsTable extends Transactions
     if (data.containsKey('txn_owner')) {
       context.handle(_txnOwnerMeta,
           txnOwner.isAcceptableOrUnknown(data['txn_owner'], _txnOwnerMeta));
+    }
+    if (data.containsKey('is_updated')) {
+      context.handle(_isUpdatedMeta,
+          isUpdated.isAcceptableOrUnknown(data['is_updated'], _isUpdatedMeta));
+    }
+    if (data.containsKey('is_deleted')) {
+      context.handle(_isDeletedMeta,
+          isDeleted.isAcceptableOrUnknown(data['is_deleted'], _isDeletedMeta));
     }
     return context;
   }

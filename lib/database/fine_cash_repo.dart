@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:fine_cash/database/remote_db.dart';
 import 'package:fine_cash/models/metadatas.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
@@ -33,14 +34,18 @@ class FineCashRepository extends _$FineCashRepository {
 
   void fetchAccounts() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
-    txnProvider.setAccountList(
-        allTxnEntries.map((e) => e.accountHead.toUpperCase()).toSet());
+    txnProvider.setAccountList(allTxnEntries
+        .where((e) => !e.isDeleted)
+        .map((e) => e.accountHead.toUpperCase())
+        .toSet());
   }
 
   void fetchSubAccounts() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
-    txnProvider.setSubAccountList(
-        allTxnEntries.map((e) => e.subAccountHead.toUpperCase()).toSet());
+    txnProvider.setSubAccountList(allTxnEntries
+        .where((e) => !e.isDeleted)
+        .map((e) => e.subAccountHead.toUpperCase())
+        .toSet());
   }
 
   void fetchAllTxns() async {
@@ -58,12 +63,49 @@ class FineCashRepository extends _$FineCashRepository {
     await delete(metaDatas).go();
   }
 
+  Future<bool> syncData() async {
+    txns.forEach((txn) {
+      var cacheDBTxn = txnProvider.allTxns
+          .firstWhere((e) => e.id == txn.id, orElse: () => null);
+      var entry = TransactionsCompanion(
+        id: Value(txn.id),
+        accountHead: Value(txn.accountHead),
+        subAccountHead: Value(txn.subAccountHead),
+        createdDTime: Value(txn.createdDTime),
+        credit: Value(txn.credit),
+        debit: Value(txn.debit),
+        desc: Value(txn.desc),
+        txnOwner: Value(txn.txnOwner),
+        isDeleted: Value(txn.isDeleted),
+        isUpdated: Value(false),
+        isSynced: Value(true),
+      );
+
+      if (cacheDBTxn == null) {
+        addTxn(entry);
+        if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
+          addMetaData(MetaDatasCompanion.insert(
+              accountHead: entry.accountHead.value.toUpperCase(),
+              icon: icons[random.nextInt(icons.length)],
+              color: randomColor.randomMaterialColor().value));
+      } else {
+        updateTxn(entry);
+        if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
+          addMetaData(MetaDatasCompanion.insert(
+              accountHead: entry.accountHead.value.toUpperCase(),
+              icon: icons[random.nextInt(icons.length)],
+              color: randomColor.randomMaterialColor().value));
+      }
+    });
+    return true;
+  }
+
   @override
   int get schemaVersion => 1;
 
   Future<int> addTxn(TransactionsCompanion entry) async {
     var randomNumber = random.nextInt(icons.length);
-    int result =
+    int rowId =
         await into(transactions).insert(entry, mode: InsertMode.insertOrFail);
     this.fetchAccounts();
     this.fetchSubAccounts();
@@ -73,7 +115,17 @@ class FineCashRepository extends _$FineCashRepository {
           accountHead: entry.accountHead.value.toUpperCase(),
           icon: icons[randomNumber],
           color: randomColor.randomMaterialColor().value));
-    return result;
+    var status = addRemoteTxn(entry, user);
+    status.then((value) async {
+      if (value)
+        await update(transactions)
+            .replace(entry.copyWith(isSynced: Value(true)));
+      this.fetchAccounts();
+      this.fetchSubAccounts();
+      this.fetchAllTxns();
+      this.fetchAllMetaDatas();
+    });
+    return rowId;
   }
 
   Future<bool> updateTxn(TransactionsCompanion entry) async {
@@ -82,17 +134,54 @@ class FineCashRepository extends _$FineCashRepository {
     this.fetchSubAccounts();
     this.fetchAllTxns();
     this.fetchAllMetaDatas();
+    var status = updateRemoteTxn(entry, user);
+    status.then((value) async {
+      if (value)
+        await update(transactions)
+            .replace(entry.copyWith(isSynced: Value(true)));
+      this.fetchAccounts();
+      this.fetchSubAccounts();
+      this.fetchAllTxns();
+      this.fetchAllMetaDatas();
+    });
     return result;
   }
 
-  void deleteTxn(Set<int> ids) async {
-    ids.forEach((id) {
-      (delete(transactions)..where((tbl) => tbl.id.equals(id))).go();
+  void deleteTxn(Set<String> ids) async {
+    ids.forEach((id) async {
+      var txn = txnProvider.allTxns.firstWhere((e) => e.id == id);
+      await updateTxn(TransactionsCompanion.insert(
+        isDeleted: Value(true),
+        isUpdated: Value(false),
+        id: txn.id,
+        createdDTime: Value(txn.createdDTime),
+        accountHead: txn.accountHead,
+        subAccountHead: Value(txn.subAccountHead),
+        credit: txn.credit != null ? Value(txn.credit) : Value(null),
+        debit: txn.debit != null ? Value(txn.debit) : Value(null),
+        desc: Value(txn.desc),
+      ));
+      var status = deleteRemoteTxn(id, user);
+      status.then((value) async {
+        if (value)
+          await updateTxn(TransactionsCompanion.insert(
+            isDeleted: Value(true),
+            isUpdated: Value(false),
+            id: txn.id,
+            isSynced: Value(true),
+            createdDTime: Value(txn.createdDTime),
+            accountHead: txn.accountHead,
+            subAccountHead: Value(txn.subAccountHead),
+            credit: txn.credit != null ? Value(txn.credit) : Value(null),
+            debit: txn.debit != null ? Value(txn.debit) : Value(null),
+            desc: Value(txn.desc),
+          ));
+        this.fetchAccounts();
+        this.fetchSubAccounts();
+        this.fetchAllTxns();
+        this.fetchAllMetaDatas();
+      });
     });
-    this.fetchAccounts();
-    this.fetchSubAccounts();
-    this.fetchAllTxns();
-    this.fetchAllMetaDatas();
   }
 
   addMetaData(MetaDatasCompanion data) async {
@@ -115,12 +204,9 @@ class FineCashRepository extends _$FineCashRepository {
 }
 
 LazyDatabase _openConnection() {
-  // if (Platform.isWindows)
   return LazyDatabase(() async {
-    // put the database file, called db.sqlite here, into the documents folder
-    // for your app.
     final file = File(p.join(await _localPath, 'db.sqlite'));
-    return VmDatabase(file, logStatements: true);
+    return VmDatabase(file, logStatements: false);
   });
 }
 
