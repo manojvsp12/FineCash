@@ -1,4 +1,4 @@
-package com.example.fine_cash
+package app.tripleclick.fine_cash
 
 import io.flutter.embedding.android.FlutterActivity
 

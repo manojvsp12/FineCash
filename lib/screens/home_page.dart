@@ -317,14 +317,23 @@ class _HomePageState extends State<HomePage> {
             color: Colors.redAccent,
             icon: Icon(Icons.delete_forever),
             onPressed: () {
-              repo.deleteTxn(selected);
-              selected.clear();
-              _scaffoldKey.currentState.showSnackBar(
-                SnackBar(
-                  backgroundColor: Colors.redAccent,
-                  content: Text('Transaction(s) deleted.'),
-                ),
-              );
+              if (selected.isEmpty) {
+                _scaffoldKey.currentState.showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.redAccent,
+                    content: Text('No Transactions selected.'),
+                  ),
+                );
+              } else {
+                repo.deleteTxn(selected);
+                selected.clear();
+                _scaffoldKey.currentState.showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.redAccent,
+                    content: Text('Transaction(s) deleted.'),
+                  ),
+                );
+              }
             },
           ),
           IconButton(
