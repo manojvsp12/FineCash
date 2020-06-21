@@ -16,9 +16,9 @@ bool _isSyncing = false;
 var settings = new ConnectionSettings(
     host: '81.16.28.154',
     port: 3306,
-    user: 'u936125469_testdb',
-    password: 'testdb',
-    db: 'u936125469_testdb');
+    user: 'u936125469_FineCashDB',
+    password: 'R56ciwHR',
+    db: 'u936125469_FineCashDB');
 
 connectdb() async {
   connection = await MySqlConnection.connect(settings);
@@ -28,7 +28,7 @@ fetchUsers() async {
   if (connection == null) await connectdb();
   try {
     var results =
-        await connection.query('SELECT * FROM u936125469_testdb.user');
+        await connection.query('SELECT * FROM u936125469_FineCashDB.user');
     for (var row in results) {
       userDetails.putIfAbsent(row[0], () => row[1]);
     }
@@ -97,7 +97,7 @@ _insertLocalToRemoteTxns(Transaction txn) async {
   Results result;
   try {
     if (connection == null) await connectdb();
-    String query = 'insert into u936125469_testdb.transactions values' +
+    String query = 'insert into u936125469_FineCashDB.transactions values' +
         '(\'${txn.id}\', \'${txn.accountHead}\', \'${txn.subAccountHead}\', \'${txn.desc}\', ${txn.credit}, ${txn.debit}, \'${txn.createdDTime}\',' +
         ' \'${user}\', ${txn.isDeleted == null ? false : txn.isDeleted}, \'${txn.updatedDTime}\');';
     result = await connection.query(query);
@@ -119,10 +119,10 @@ _insertLocalToRemoteTxns(Transaction txn) async {
 _updateLocalToRemoteTxns(Transaction txn) async {
   Results result;
   try {
-    var sql = 'update u936125469_testdb.transactions set ' +
+    var sql = 'update u936125469_FineCashDB.transactions set ' +
         'account_head = \'${txn.accountHead}\'' +
         ',sub_account_head= \'${txn.subAccountHead}\'' +
-        ',u936125469_testdb.transactions.desc=\'${txn.desc}\'' +
+        ',u936125469_FineCashDB.transactions.desc=\'${txn.desc}\'' +
         ',credit = ' +
         ((txn.credit == null)
             ? null.toString()
@@ -156,7 +156,7 @@ _deleteLocalToRemoteTxns(Transaction txn) async {
   Results result;
   try {
     if (connection == null) await connectdb();
-    var sql = 'update u936125469_testdb.transactions set' +
+    var sql = 'update u936125469_FineCashDB.transactions set' +
         ' is_deleted = true where id = \'${txn.id}\' and txn_owner = \'${user}\';';
     result = await connection.query(sql);
     return true;
@@ -180,7 +180,7 @@ Future _fetchRecords(TxnProvider txnProvider) async {
     if (connection == null) await connectdb();
     if (txnProvider.allTxns.where((e) => e.txnOwner == user).isEmpty) {
       var sql =
-          'SELECT * FROM u936125469_testdb.transactions t where t.txn_owner = \'' +
+          'SELECT * FROM u936125469_FineCashDB.transactions t where t.txn_owner = \'' +
               user +
               '\'';
       print(sql);
@@ -189,11 +189,11 @@ Future _fetchRecords(TxnProvider txnProvider) async {
       var allTxns = txnProvider.allTxns;
       allTxns.sort((a, b) => b.updatedDTime.compareTo(a.updatedDTime));
       print(
-          'SELECT * FROM u936125469_testdb.transactions t where updatedDTime > \'${allTxns.first.updatedDTime}\' and t.txn_owner = \'' +
+          'SELECT * FROM u936125469_FineCashDB.transactions t where updatedDTime > \'${allTxns.first.updatedDTime}\' and t.txn_owner = \'' +
               user +
               '\'');
       results = await connection.query(
-          'SELECT * FROM u936125469_testdb.transactions t where updatedDTime >= \'${allTxns.first.updatedDTime}\' and t.txn_owner = \'' +
+          'SELECT * FROM u936125469_FineCashDB.transactions t where updatedDTime >= \'${allTxns.first.updatedDTime}\' and t.txn_owner = \'' +
               user +
               '\'');
     }
@@ -227,7 +227,7 @@ Future<bool> addRemoteTxn(TransactionsCompanion entry, String user) async {
   try {
     print(entry.id.value);
     if (connection == null) await connectdb();
-    String query = 'insert into u936125469_testdb.transactions values' +
+    String query = 'insert into u936125469_FineCashDB.transactions values' +
         '(\'${entry.id.value}\', \'${entry.accountHead.value}\', \'${entry.subAccountHead.value}\', \'${entry.desc.value}\', ${entry.credit.value}, ${entry.debit.value}, \'${entry.createdDTime.value}\',' +
         ' \'${user}\', ${entry.isDeleted.value == null ? false : entry.isDeleted.value}, \'${entry.updatedDTime.value}\');';
     print(query);
@@ -252,8 +252,8 @@ Future<bool> updateRemoteTxn(TransactionsCompanion entry, String user) async {
   try {
     if (connection == null) await connectdb();
     String dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-    String query = 'update u936125469_testdb.transactions set ' +
-        'account_head = \'${entry.accountHead.value}\', sub_account_head = \'${entry.subAccountHead.value}\', u936125469_testdb.transactions.desc = \'${entry.desc.value}\', credit = ${entry.credit.value}, debit = ${entry.debit.value}, createdDTime = \'${entry.createdDTime.value}\',' +
+    String query = 'update u936125469_FineCashDB.transactions set ' +
+        'account_head = \'${entry.accountHead.value}\', sub_account_head = \'${entry.subAccountHead.value}\', u936125469_FineCashDB.transactions.desc = \'${entry.desc.value}\', credit = ${entry.credit.value}, debit = ${entry.debit.value}, createdDTime = \'${entry.createdDTime.value}\',' +
         ' is_deleted = ${entry.isDeleted.value == null ? false : entry.isDeleted.value}, updatedDTime = \'${dateTime}\' where id = \'${entry.id.value}\' and txn_owner = \'${user}\';';
     print(query);
     result = await connection.query(query);
@@ -277,7 +277,7 @@ Future<bool> deleteRemoteTxn(id, user) async {
   try {
     if (connection == null) await connectdb();
     String dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-    String query = 'update u936125469_testdb.transactions set' +
+    String query = 'update u936125469_FineCashDB.transactions set' +
         ' is_deleted = true, updatedDTime = \'${dateTime}\' where id = \'${id}\' and txn_owner = \'${user}\';';
     print(query);
     result = await connection.query(query);
