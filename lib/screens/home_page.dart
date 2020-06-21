@@ -117,19 +117,20 @@ class _HomePageState extends State<HomePage> {
       foregroundColor: Colors.black,
       child: currentIndex.value == 3 ? Icon(Icons.sync) : Icon(Icons.add),
       onPressed: currentIndex.value == 3
-          ? () {
+          ? () async {
               syncNow.value = true;
-              var status = syncTxns(txnProvider, repo);
-              status.then((value) {
-                if (!value)
-                  _scaffoldKey.currentState.showSnackBar(
-                    SnackBar(
-                      backgroundColor: Colors.redAccent,
-                      content: Text('Unable to connect to Internet.'),
-                    ),
-                  );
-                return syncNow.value = false;
-              });
+              var status = await syncTxns(txnProvider, repo);
+              // status.then((value) {
+              if (status != null && !status)
+                _scaffoldKey.currentState.showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.redAccent,
+                    content: Text('Unable to connect to Internet.'),
+                  ),
+                );
+              else
+                syncNow.value = false;
+              // });
             }
           : () {
               slideDialog.showSlideDialog(
@@ -241,6 +242,26 @@ class _HomePageState extends State<HomePage> {
             color: Colors.deepPurple,
             icon: Icon(MdiIcons.sigma),
             onPressed: () {
+              double total = 0;
+              try {
+                var creditMap = txnProvider.allTxns
+                    .where((txn) =>
+                        selected.contains(txn.id) && txn.credit != null)
+                    .map((e) => e.credit)
+                    .toList();
+                if (creditMap.isEmpty) creditMap.add(0);
+                total += creditMap.reduce((a, b) => a + b);
+                var debitMap = txnProvider.allTxns
+                    .where(
+                        (txn) => selected.contains(txn.id) && txn.debit != null)
+                    .map((e) => e.debit)
+                    .toList();
+                if (debitMap.isEmpty) debitMap.add(0);
+                total -= debitMap.reduce((a, b) => a);
+                print(total);
+              } catch (e) {
+                print(e);
+              }
               showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
@@ -249,21 +270,6 @@ class _HomePageState extends State<HomePage> {
                                 BorderRadius.all(Radius.circular(10.0))),
                         content: Builder(
                           builder: (context) {
-                            double total = 0;
-                            try {
-                              total += txnProvider.allTxns
-                                  .where((txn) =>
-                                      selected.contains(txn.id) &&
-                                      txn.credit != null)
-                                  .map((e) => e.credit)
-                                  .reduce((a, b) => a + b);
-                              total -= txnProvider.allTxns
-                                  .where((txn) =>
-                                      selected.contains(txn.id) &&
-                                      txn.debit != null)
-                                  .map((e) => e.debit)
-                                  .reduce((a, b) => a + b);
-                            } on StateError {}
                             return Container(
                               height: MediaQuery.of(context).size.height / 5,
                               width: MediaQuery.of(context).size.width / 5,
@@ -339,9 +345,9 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             color: kPrimaryColor,
             icon: Icon(Icons.exit_to_app),
-            onPressed: () {
+            onPressed: () async {
               widget.onLogout(context);
-              repo.clearDB();
+              await repo.clearDB();
             },
           ),
         ],
@@ -360,19 +366,33 @@ class AccountSummaryPage extends StatelessWidget {
     ScreenScaler scaler = ScreenScaler()..init(context);
     TxnProvider txnProvider = Provider.of<TxnProvider>(context);
     FilterProvider filter = Provider.of<FilterProvider>(context);
+    _getCategories() {
+      var cat = ['ALL'];
+      cat.addAll(txnProvider.allTxns
+          .where((e) => filter.acctFilter.contains(e.accountHead.toUpperCase()))
+          .map((e) => e.subAccountHead.toUpperCase())
+          .toSet()
+          .toList());
+      return cat;
+    }
+
     return Column(
       children: <Widget>[
         // SearchBox(onChanged: (value) {}),
         if (currentIndex == 1 && txnProvider.getSubAccountList.length > 1)
           SubAccountsList(
             selectedIndex: filter.subAcctFilter.isEmpty ? 0 : null,
-            categories: txnProvider.getSubAccountList.toList(),
+            categories: filter.acctFilter.isNotEmpty
+                ? _getCategories()
+                : txnProvider.subAccountList.toList(),
             onPressed: (index) {
               if (txnProvider.getSubAccountList.elementAt(index) == 'ALL')
                 filter.subAcctFilter = [];
               else
                 filter.subAcctFilter = [
-                  txnProvider.getSubAccountList.elementAt(index)
+                  filter.acctFilter.isNotEmpty
+                      ? _getCategories()[index]
+                      : txnProvider.getSubAccountList.elementAt(index)
                 ];
             },
           )

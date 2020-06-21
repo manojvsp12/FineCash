@@ -14,7 +14,9 @@ class Transactions extends Table {
   TextColumn get txnOwner => text().clientDefault(() => user)();
   BoolColumn get isUpdated => boolean().withDefault(Constant(false))();
   BoolColumn get isDeleted => boolean().withDefault(Constant(false))();
+  DateTimeColumn get updatedDTime =>
+      dateTime().withDefault(currentDateAndTime)();
 
-@override 
- Set<Column> get primaryKey => {id};
+  @override
+  Set<Column> get primaryKey => {id};
 }

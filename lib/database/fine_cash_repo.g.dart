@@ -19,6 +19,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String txnOwner;
   final bool isUpdated;
   final bool isDeleted;
+  final DateTime updatedDTime;
   Transaction(
       {@required this.id,
       @required this.accountHead,
@@ -30,7 +31,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       @required this.isSynced,
       @required this.txnOwner,
       @required this.isUpdated,
-      @required this.isDeleted});
+      @required this.isDeleted,
+      @required this.updatedDTime});
   factory Transaction.fromData(Map<String, dynamic> data, GeneratedDatabase db,
       {String prefix}) {
     final effectivePrefix = prefix ?? '';
@@ -59,6 +61,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           .mapFromDatabaseResponse(data['${effectivePrefix}is_updated']),
       isDeleted: boolType
           .mapFromDatabaseResponse(data['${effectivePrefix}is_deleted']),
+      updatedDTime: dateTimeType
+          .mapFromDatabaseResponse(data['${effectivePrefix}updated_d_time']),
     );
   }
   @override
@@ -97,6 +101,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     if (!nullToAbsent || isDeleted != null) {
       map['is_deleted'] = Variable<bool>(isDeleted);
     }
+    if (!nullToAbsent || updatedDTime != null) {
+      map['updated_d_time'] = Variable<DateTime>(updatedDTime);
+    }
     return map;
   }
 
@@ -129,6 +136,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       isDeleted: isDeleted == null && nullToAbsent
           ? const Value.absent()
           : Value(isDeleted),
+      updatedDTime: updatedDTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedDTime),
     );
   }
 
@@ -147,6 +157,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       txnOwner: serializer.fromJson<String>(json['txnOwner']),
       isUpdated: serializer.fromJson<bool>(json['isUpdated']),
       isDeleted: serializer.fromJson<bool>(json['isDeleted']),
+      updatedDTime: serializer.fromJson<DateTime>(json['updatedDTime']),
     );
   }
   @override
@@ -164,6 +175,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'txnOwner': serializer.toJson<String>(txnOwner),
       'isUpdated': serializer.toJson<bool>(isUpdated),
       'isDeleted': serializer.toJson<bool>(isDeleted),
+      'updatedDTime': serializer.toJson<DateTime>(updatedDTime),
     };
   }
 
@@ -178,7 +190,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           bool isSynced,
           String txnOwner,
           bool isUpdated,
-          bool isDeleted}) =>
+          bool isDeleted,
+          DateTime updatedDTime}) =>
       Transaction(
         id: id ?? this.id,
         accountHead: accountHead ?? this.accountHead,
@@ -191,6 +204,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         txnOwner: txnOwner ?? this.txnOwner,
         isUpdated: isUpdated ?? this.isUpdated,
         isDeleted: isDeleted ?? this.isDeleted,
+        updatedDTime: updatedDTime ?? this.updatedDTime,
       );
   @override
   String toString() {
@@ -205,7 +219,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('isSynced: $isSynced, ')
           ..write('txnOwner: $txnOwner, ')
           ..write('isUpdated: $isUpdated, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('isDeleted: $isDeleted, ')
+          ..write('updatedDTime: $updatedDTime')
           ..write(')'))
         .toString();
   }
@@ -229,8 +244,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
                                   isSynced.hashCode,
                                   $mrjc(
                                       txnOwner.hashCode,
-                                      $mrjc(isUpdated.hashCode,
-                                          isDeleted.hashCode)))))))))));
+                                      $mrjc(
+                                          isUpdated.hashCode,
+                                          $mrjc(isDeleted.hashCode,
+                                              updatedDTime.hashCode))))))))))));
   @override
   bool operator ==(dynamic other) =>
       identical(this, other) ||
@@ -245,7 +262,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.isSynced == this.isSynced &&
           other.txnOwner == this.txnOwner &&
           other.isUpdated == this.isUpdated &&
-          other.isDeleted == this.isDeleted);
+          other.isDeleted == this.isDeleted &&
+          other.updatedDTime == this.updatedDTime);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -260,6 +278,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> txnOwner;
   final Value<bool> isUpdated;
   final Value<bool> isDeleted;
+  final Value<DateTime> updatedDTime;
   const TransactionsCompanion({
     this.id = const Value.absent(),
     this.accountHead = const Value.absent(),
@@ -272,6 +291,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.txnOwner = const Value.absent(),
     this.isUpdated = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.updatedDTime = const Value.absent(),
   });
   TransactionsCompanion.insert({
     @required String id,
@@ -285,6 +305,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.txnOwner = const Value.absent(),
     this.isUpdated = const Value.absent(),
     this.isDeleted = const Value.absent(),
+    this.updatedDTime = const Value.absent(),
   })  : id = Value(id),
         accountHead = Value(accountHead);
   static Insertable<Transaction> custom({
@@ -299,6 +320,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String> txnOwner,
     Expression<bool> isUpdated,
     Expression<bool> isDeleted,
+    Expression<DateTime> updatedDTime,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -312,6 +334,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (txnOwner != null) 'txn_owner': txnOwner,
       if (isUpdated != null) 'is_updated': isUpdated,
       if (isDeleted != null) 'is_deleted': isDeleted,
+      if (updatedDTime != null) 'updated_d_time': updatedDTime,
     });
   }
 
@@ -326,7 +349,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       Value<bool> isSynced,
       Value<String> txnOwner,
       Value<bool> isUpdated,
-      Value<bool> isDeleted}) {
+      Value<bool> isDeleted,
+      Value<DateTime> updatedDTime}) {
     return TransactionsCompanion(
       id: id ?? this.id,
       accountHead: accountHead ?? this.accountHead,
@@ -339,6 +363,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       txnOwner: txnOwner ?? this.txnOwner,
       isUpdated: isUpdated ?? this.isUpdated,
       isDeleted: isDeleted ?? this.isDeleted,
+      updatedDTime: updatedDTime ?? this.updatedDTime,
     );
   }
 
@@ -377,6 +402,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (isDeleted.present) {
       map['is_deleted'] = Variable<bool>(isDeleted.value);
+    }
+    if (updatedDTime.present) {
+      map['updated_d_time'] = Variable<DateTime>(updatedDTime.value);
     }
     return map;
   }
@@ -513,6 +541,17 @@ class $TransactionsTable extends Transactions
         defaultValue: Constant(false));
   }
 
+  final VerificationMeta _updatedDTimeMeta =
+      const VerificationMeta('updatedDTime');
+  GeneratedDateTimeColumn _updatedDTime;
+  @override
+  GeneratedDateTimeColumn get updatedDTime =>
+      _updatedDTime ??= _constructUpdatedDTime();
+  GeneratedDateTimeColumn _constructUpdatedDTime() {
+    return GeneratedDateTimeColumn('updated_d_time', $tableName, false,
+        defaultValue: currentDateAndTime);
+  }
+
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -525,7 +564,8 @@ class $TransactionsTable extends Transactions
         isSynced,
         txnOwner,
         isUpdated,
-        isDeleted
+        isDeleted,
+        updatedDTime
       ];
   @override
   $TransactionsTable get asDslTable => this;
@@ -590,6 +630,12 @@ class $TransactionsTable extends Transactions
     if (data.containsKey('is_deleted')) {
       context.handle(_isDeletedMeta,
           isDeleted.isAcceptableOrUnknown(data['is_deleted'], _isDeletedMeta));
+    }
+    if (data.containsKey('updated_d_time')) {
+      context.handle(
+          _updatedDTimeMeta,
+          updatedDTime.isAcceptableOrUnknown(
+              data['updated_d_time'], _updatedDTimeMeta));
     }
     return context;
   }

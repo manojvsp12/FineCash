@@ -26,77 +26,93 @@ class FineCashRepository extends _$FineCashRepository {
 
   FineCashRepository(this.txnProvider, this.metaDataProvider)
       : super(_openConnection()) {
-    this.fetchAccounts();
-    this.fetchSubAccounts();
-    this.fetchAllTxns();
-    this.fetchAllMetaDatas();
+    _syncTxnsLocalToProvider();
   }
 
-  void fetchAccounts() async {
+  Future _syncTxnsLocalToProvider() async {
+    await this.fetchAccounts();
+    await this.fetchSubAccounts();
+    await this.fetchAllTxns();
+    await this.fetchAllMetaDatas();
+    return true;
+  }
+
+  Future fetchAccounts() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
     txnProvider.setAccountList(allTxnEntries
         .where((e) => !e.isDeleted)
         .map((e) => e.accountHead.toUpperCase())
         .toSet());
+    return true;
   }
 
-  void fetchSubAccounts() async {
+  Future fetchSubAccounts() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
     txnProvider.setSubAccountList(allTxnEntries
         .where((e) => !e.isDeleted)
         .map((e) => e.subAccountHead.toUpperCase())
         .toSet());
+    return true;
   }
 
-  void fetchAllTxns() async {
+  Future fetchAllTxns() async {
     List<Transaction> allTxnEntries = await this.allTxnEntries;
     txnProvider.setAllTxns(allTxnEntries);
+    return true;
   }
 
-  void fetchAllMetaDatas() async {
+  Future fetchAllMetaDatas() async {
     List<MetaData> allMetaDataEntries = await this.loadMetaDatas;
     metaDataProvider.setAllTxns(allMetaDataEntries);
+    return true;
   }
 
-  void clearDB() async {
+  Future clearDB() async {
     await delete(transactions).go();
     await delete(metaDatas).go();
+    txns = [];
+    return true;
   }
 
   Future<bool> syncData() async {
-    txns.forEach((txn) {
-      var cacheDBTxn = txnProvider.allTxns
-          .firstWhere((e) => e.id == txn.id, orElse: () => null);
-      var entry = TransactionsCompanion(
-        id: Value(txn.id),
-        accountHead: Value(txn.accountHead),
-        subAccountHead: Value(txn.subAccountHead),
-        createdDTime: Value(txn.createdDTime),
-        credit: Value(txn.credit),
-        debit: Value(txn.debit),
-        desc: Value(txn.desc),
-        txnOwner: Value(txn.txnOwner),
-        isDeleted: Value(txn.isDeleted),
-        isUpdated: Value(false),
-        isSynced: Value(true),
-      );
+    print(txns);
+    if (txns.isNotEmpty)
+      for (Transaction txn in txns) {
+        var cacheDBTxn = txnProvider.allTxns
+            .firstWhere((e) => e.id == txn.id, orElse: () => null);
+        var entry = TransactionsCompanion(
+          id: Value(txn.id),
+          accountHead: Value(txn.accountHead),
+          subAccountHead: Value(txn.subAccountHead),
+          createdDTime: Value(txn.createdDTime),
+          credit: Value(txn.credit),
+          debit: Value(txn.debit),
+          desc: Value(txn.desc),
+          txnOwner: Value(txn.txnOwner),
+          isDeleted: Value(txn.isDeleted),
+          isUpdated: Value(false),
+          isSynced: Value(true),
+        );
 
-      if (cacheDBTxn == null) {
-        addTxn(entry);
-        if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
-          addMetaData(MetaDatasCompanion.insert(
-              accountHead: entry.accountHead.value.toUpperCase(),
-              icon: icons[random.nextInt(icons.length)],
-              color: randomColor.randomMaterialColor().value));
-      } else {
-        updateTxn(entry);
-        if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
-          addMetaData(MetaDatasCompanion.insert(
-              accountHead: entry.accountHead.value.toUpperCase(),
-              icon: icons[random.nextInt(icons.length)],
-              color: randomColor.randomMaterialColor().value));
+        if (cacheDBTxn == null) {
+          await into(transactions).insert(entry, mode: InsertMode.insertOrFail);
+          await _syncTxnsLocalToProvider();
+          await _createMetaData(entry);
+        } else {
+          await update(transactions).replace(entry);
+          await _syncTxnsLocalToProvider();
+          await _createMetaData(entry);
+        }
       }
-    });
+    return true;
+  }
+
+  Future _createMetaData(TransactionsCompanion entry) async {
+    if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
+      await addMetaData(MetaDatasCompanion.insert(
+          accountHead: entry.accountHead.value.toUpperCase(),
+          icon: icons[random.nextInt(icons.length)],
+          color: randomColor.randomMaterialColor().value));
     return true;
   }
 
@@ -104,45 +120,32 @@ class FineCashRepository extends _$FineCashRepository {
   int get schemaVersion => 1;
 
   Future<int> addTxn(TransactionsCompanion entry) async {
-    var randomNumber = random.nextInt(icons.length);
     int rowId =
         await into(transactions).insert(entry, mode: InsertMode.insertOrFail);
-    this.fetchAccounts();
-    this.fetchSubAccounts();
-    this.fetchAllTxns();
-    if (metaDataProvider.getMetaData(entry.accountHead.value) == null)
-      await addMetaData(MetaDatasCompanion.insert(
-          accountHead: entry.accountHead.value.toUpperCase(),
-          icon: icons[randomNumber],
-          color: randomColor.randomMaterialColor().value));
+    await _createMetaData(entry);
+    await _syncTxnsLocalToProvider();
     var status = addRemoteTxn(entry, user);
     status.then((value) async {
       if (value)
         await update(transactions)
             .replace(entry.copyWith(isSynced: Value(true)));
-      this.fetchAccounts();
-      this.fetchSubAccounts();
-      this.fetchAllTxns();
-      this.fetchAllMetaDatas();
+      await _createMetaData(entry);
+      await _syncTxnsLocalToProvider();
     });
     return rowId;
   }
 
   Future<bool> updateTxn(TransactionsCompanion entry) async {
     bool result = await update(transactions).replace(entry);
-    this.fetchAccounts();
-    this.fetchSubAccounts();
-    this.fetchAllTxns();
-    this.fetchAllMetaDatas();
+    await _syncTxnsLocalToProvider();
     var status = updateRemoteTxn(entry, user);
     status.then((value) async {
-      if (value)
+      print(value);
+      if (value) {
         await update(transactions)
             .replace(entry.copyWith(isSynced: Value(true)));
-      this.fetchAccounts();
-      this.fetchSubAccounts();
-      this.fetchAllTxns();
-      this.fetchAllMetaDatas();
+        await _syncTxnsLocalToProvider();
+      }
     });
     return result;
   }
@@ -176,15 +179,12 @@ class FineCashRepository extends _$FineCashRepository {
             debit: txn.debit != null ? Value(txn.debit) : Value(null),
             desc: Value(txn.desc),
           ));
-        this.fetchAccounts();
-        this.fetchSubAccounts();
-        this.fetchAllTxns();
-        this.fetchAllMetaDatas();
+        await _syncTxnsLocalToProvider();
       });
     });
   }
 
-  addMetaData(MetaDatasCompanion data) async {
+  Future addMetaData(MetaDatasCompanion data) async {
     int result =
         await into(metaDatas).insert(data, mode: InsertMode.insertOrFail);
     this.fetchAllMetaDatas();

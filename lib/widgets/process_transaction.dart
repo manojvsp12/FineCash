@@ -291,8 +291,8 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
         if (txn == null)
           await repo.addTxn(TransactionsCompanion.insert(
             id: Uuid().v4(),
-            accountHead: accountText.value,
-            subAccountHead: moor.Value(subAccountText.value),
+            accountHead: accountText.value.trim(),
+            subAccountHead: moor.Value(subAccountText.value.trim()),
             credit: crOrDr.value.toString() == 'Credit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value.absent(),
@@ -301,6 +301,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
                 : moor.Value.absent(),
             desc: moor.Value(descText.value),
             createdDTime: moor.Value(dateAndTime.value),
+            updatedDTime: moor.Value(DateTime.now()),
           ));
         else
           await repo.updateTxn(TransactionsCompanion.insert(
@@ -308,8 +309,9 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
             isUpdated: moor.Value(true),
             id: txn.id,
             createdDTime: moor.Value(dateAndTime.value),
-            accountHead: accountText.value,
-            subAccountHead: moor.Value(subAccountText.value),
+            updatedDTime: moor.Value(DateTime.now()),
+            accountHead: accountText.value.trim(),
+            subAccountHead: moor.Value(subAccountText.value.trim()),
             credit: crOrDr.value.toString() == 'Credit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value(null),

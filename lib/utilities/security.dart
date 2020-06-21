@@ -17,6 +17,8 @@ String hash(data1, data2) {
 bool authenticate(String username, String pwd) {
   var userHash = hash(username, pwd);
   var pwdHash = hash(pwd, username);
+  print(userHash);
+  print(pwdHash);
   if (userDetails.containsKey(userHash) && pwdHash == userDetails[userHash]) {
     write({'username': userHash, "isAuth": true});
     user = userHash;
