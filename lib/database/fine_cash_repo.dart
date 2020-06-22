@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:fine_cash/database/remote_db.dart';
 import 'package:fine_cash/models/metadatas.dart';
+import 'package:fine_cash/providers/fine_cash_repo_provider.dart';
 import 'package:fine_cash/providers/metadata_provider.dart';
 import 'package:fine_cash/providers/txn_provider.dart';
 import 'package:fine_cash/utilities/preferences.dart';
@@ -75,7 +76,6 @@ class FineCashRepository extends _$FineCashRepository {
   }
 
   Future<bool> syncData() async {
-    print(txns);
     if (txns.isNotEmpty)
       for (Transaction txn in txns) {
         var cacheDBTxn = txnProvider.allTxns
@@ -92,6 +92,7 @@ class FineCashRepository extends _$FineCashRepository {
           isDeleted: Value(txn.isDeleted),
           isUpdated: Value(false),
           isSynced: Value(true),
+          updatedDTime: Value(txn.updatedDTime),
         );
 
         if (cacheDBTxn == null) {
@@ -104,6 +105,30 @@ class FineCashRepository extends _$FineCashRepository {
           await _createMetaData(entry);
         }
       }
+    var notSynced = txnProvider.allTxns.where((e) => !e.isSynced).toList();
+    print('notsynced');
+    print(notSynced);
+    if (notSynced.isNotEmpty) {
+      notSynced.forEach((txn) async {
+        var entry = TransactionsCompanion(
+          id: Value(txn.id),
+          accountHead: Value(txn.accountHead),
+          subAccountHead: Value(txn.subAccountHead),
+          createdDTime: Value(txn.createdDTime),
+          credit: Value(txn.credit),
+          debit: Value(txn.debit),
+          desc: Value(txn.desc),
+          txnOwner: Value(txn.txnOwner),
+          isDeleted: Value(txn.isDeleted),
+          isUpdated: Value(true),
+          isSynced: Value(true),
+          updatedDTime: Value(DateTime.now()),
+        );
+        var status = await update(transactions).replace(entry);
+        print(status);
+      });
+      await syncTxns(txnProvider, repo);
+    }
     return true;
   }
 

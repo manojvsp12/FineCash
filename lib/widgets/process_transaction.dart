@@ -269,6 +269,11 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
   void onSubmitting() async {
     var isError = false;
     try {
+        print(dateAndTime.value.isAfter(DateTime.now()));
+      if (dateAndTime.value.isAfter(DateTime.now())) {
+        dateAndTime.addError('Date/Time cannot be in future.');
+        isError = true;
+      }
       if (accountText.value.isEmpty) {
         accountText.addError('Account Cannot be empty');
         isError = true;
@@ -299,7 +304,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
             debit: crOrDr.value.toString() == 'Debit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value.absent(),
-            desc: moor.Value(descText.value),
+            desc: moor.Value(descText.value.trim()),
             createdDTime: moor.Value(dateAndTime.value),
             updatedDTime: moor.Value(DateTime.now()),
           ));
@@ -318,7 +323,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
             debit: crOrDr.value.toString() == 'Debit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value(null),
-            desc: moor.Value(descText.value),
+            desc: moor.Value(descText.value.trim()),
           ));
         emitSuccess(canSubmitAgain: true);
         accountText.clear();

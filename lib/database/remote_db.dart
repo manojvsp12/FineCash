@@ -80,7 +80,8 @@ Future<bool> syncTxns(TxnProvider txnProvider, FineCashRepository repo) async {
 Future _syncLocalToRemoteTxns(TxnProvider txnProvider, repo) async {
   txnProvider.allTxns.forEach((Transaction txn) async {
     try {
-      if (!txn.isUpdated && !txn.isSynced) await _insertLocalToRemoteTxns(txn);
+      if (!txn.isUpdated && !txn.isSynced && !txn.isDeleted)
+        await _insertLocalToRemoteTxns(txn);
       if (txn.isUpdated && !txn.isSynced) await _updateLocalToRemoteTxns(txn);
       if (txn.isDeleted && !txn.isSynced) await _deleteLocalToRemoteTxns(txn);
     } catch (e) {
@@ -100,6 +101,7 @@ _insertLocalToRemoteTxns(Transaction txn) async {
     String query = 'insert into u936125469_FineCashDB.transactions values' +
         '(\'${txn.id}\', \'${txn.accountHead}\', \'${txn.subAccountHead}\', \'${txn.desc}\', ${txn.credit}, ${txn.debit}, \'${txn.createdDTime}\',' +
         ' \'${user}\', ${txn.isDeleted == null ? false : txn.isDeleted}, \'${txn.updatedDTime}\');';
+    print(query);
     result = await connection.query(query);
     return true;
   } catch (e) {
@@ -157,7 +159,7 @@ _deleteLocalToRemoteTxns(Transaction txn) async {
   try {
     if (connection == null) await connectdb();
     var sql = 'update u936125469_FineCashDB.transactions set' +
-        ' is_deleted = true where id = \'${txn.id}\' and txn_owner = \'${user}\';';
+        ' is_deleted = true,updatedDTime = \'${txn.updatedDTime}\' where id = \'${txn.id}\' and txn_owner = \'${user}\';';
     result = await connection.query(sql);
     return true;
   } catch (e) {
@@ -167,16 +169,17 @@ _deleteLocalToRemoteTxns(Transaction txn) async {
       await connectdb();
       await _deleteLocalToRemoteTxns(txn);
     }
-    if (result == null)
-      return false;
-    else
-      return true;
   }
+  if (result == null)
+    return false;
+  else
+    return true;
 }
 
 Future _fetchRecords(TxnProvider txnProvider) async {
   try {
     var results;
+    txns = [];
     if (connection == null) await connectdb();
     if (txnProvider.allTxns.where((e) => e.txnOwner == user).isEmpty) {
       var sql =
@@ -186,8 +189,9 @@ Future _fetchRecords(TxnProvider txnProvider) async {
       print(sql);
       results = await connection.query(sql);
     } else {
-      var allTxns = txnProvider.allTxns;
+      var allTxns = txnProvider.allTxns.where((e) => e.isSynced).toList();
       allTxns.sort((a, b) => b.updatedDTime.compareTo(a.updatedDTime));
+      print(allTxns.first.updatedDTime);
       print(
           'SELECT * FROM u936125469_FineCashDB.transactions t where updatedDTime > \'${allTxns.first.updatedDTime}\' and t.txn_owner = \'' +
               user +
@@ -199,6 +203,7 @@ Future _fetchRecords(TxnProvider txnProvider) async {
     }
     if (results != null)
       for (var row in results) {
+        // print(row);
         txns.add(Transaction(
           id: row[0],
           accountHead: row[1],
@@ -225,7 +230,6 @@ Future _fetchRecords(TxnProvider txnProvider) async {
 Future<bool> addRemoteTxn(TransactionsCompanion entry, String user) async {
   Results result;
   try {
-    print(entry.id.value);
     if (connection == null) await connectdb();
     String query = 'insert into u936125469_FineCashDB.transactions values' +
         '(\'${entry.id.value}\', \'${entry.accountHead.value}\', \'${entry.subAccountHead.value}\', \'${entry.desc.value}\', ${entry.credit.value}, ${entry.debit.value}, \'${entry.createdDTime.value}\',' +
@@ -238,13 +242,10 @@ Future<bool> addRemoteTxn(TransactionsCompanion entry, String user) async {
     print(e);
     if (e.toString() == 'Bad state: Cannot write to socket, it is closed') {
       await connectdb();
-      await addRemoteTxn(entry, user);
+      return await addRemoteTxn(entry, user);
     }
   }
-  if (result == null)
-    return false;
-  else
-    return true;
+  return false;
 }
 
 Future<bool> updateRemoteTxn(TransactionsCompanion entry, String user) async {
@@ -263,13 +264,10 @@ Future<bool> updateRemoteTxn(TransactionsCompanion entry, String user) async {
     print(e);
     if (e.toString() == 'Bad state: Cannot write to socket, it is closed') {
       await connectdb();
-      await updateRemoteTxn(entry, user);
+      return await updateRemoteTxn(entry, user);
     }
   }
-  if (result == null)
-    return false;
-  else
-    return true;
+  return false;
 }
 
 Future<bool> deleteRemoteTxn(id, user) async {
@@ -285,11 +283,8 @@ Future<bool> deleteRemoteTxn(id, user) async {
   } catch (e) {
     if (e.toString() == 'Bad state: Cannot write to socket, it is closed') {
       await connectdb();
-      await deleteRemoteTxn(id, user);
+      return await deleteRemoteTxn(id, user);
     }
   }
-  if (result == null)
-    return false;
-  else
-    return true;
+  return false;
 }

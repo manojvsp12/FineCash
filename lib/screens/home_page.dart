@@ -798,7 +798,24 @@ class _ReportFormBloc extends FormBloc<String, String> {
       subAccountText.addError('Sub Account not found');
       isError = true;
     }
-
+    print(txnProvider.allTxns
+        .where((e) => e.accountHead == accountText.value)
+        .map((e) => e.subAccountHead)
+        .toList());
+    if (accountText.value != null &&
+        accountText.value.isNotEmpty &&
+        subAccountText.value != null &&
+        subAccountText.value.isNotEmpty &&
+        !txnProvider.allTxns
+            .where((e) =>
+                e.accountHead.toUpperCase() == accountText.value.toUpperCase())
+            .map((e) => e.subAccountHead.toUpperCase())
+            .toList()
+            .contains(subAccountText.value.toUpperCase())) {
+      subAccountText
+          .addError('Sub Account not found for Account: ${accountText.value.toUpperCase()}');
+      isError = true;
+    }
     if (isError)
       emitFailure();
     else {
@@ -861,12 +878,21 @@ class _ReportFormBloc extends FormBloc<String, String> {
         for (var i = 0; i < reportList.length; i++) {
           sheet.insertRowIterables(reportList.elementAt(i), i + 1);
         }
-        double credit = filteredTxns
-            .map((e) => e.credit != null ? e.credit : 0)
-            .reduce((a, b) => a + b);
-        var debit = filteredTxns
-            .map((e) => e.debit != null ? e.debit : 0)
-            .reduce((a, b) => a + b);
+        var creditList =
+            filteredTxns.map((e) => e.credit != null ? e.credit : 0).toList();
+        double credit = creditList.isEmpty
+            ? 0
+            : creditList.length > 1
+                ? creditList.reduce((a, b) => a + b)
+                : creditList.elementAt(0);
+        print(credit);
+        var debitList =
+            filteredTxns.map((e) => e.debit != null ? e.debit : 0).toList();
+        var debit = debitList.isEmpty
+            ? 0
+            : debitList.length > 1
+                ? debitList.reduce((a, b) => a + b)
+                : debitList.elementAt(0);
         sheet.insertRowIterables([
           ' ',
           '',
