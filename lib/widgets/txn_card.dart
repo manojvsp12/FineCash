@@ -189,7 +189,7 @@ class TransactionCard extends StatelessWidget {
                             style: Theme.of(context)
                                 .textTheme
                                 .button
-                                .copyWith(fontSize: scaler.getTextSize(7)),
+                                .copyWith(fontSize: 13),
                           ),
                         ),
                       ],
