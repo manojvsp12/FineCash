@@ -121,15 +121,17 @@ class _HomePageState extends State<HomePage> {
               syncNow.value = true;
               var status = await syncTxns(txnProvider, repo);
               // status.then((value) {
-              if (status != null && !status)
+              if (status != null && !status) {
+                syncNow.value = false;
                 _scaffoldKey.currentState.showSnackBar(
                   SnackBar(
                     backgroundColor: Colors.redAccent,
                     content: Text('Unable to connect to Internet.'),
                   ),
                 );
-              else
+              } else {
                 syncNow.value = false;
+              }
               // });
             }
           : () {

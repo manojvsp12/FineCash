@@ -42,38 +42,27 @@ fetchUsers() async {
 }
 
 Future<bool> syncTxns(TxnProvider txnProvider, FineCashRepository repo) async {
-  if (!_isSyncing) {
-    print('sync');
-    _isSyncing = true;
-    if (await DataConnectionChecker().hasConnection) {
-      if (connection == null) await connectdb();
-      try {
+  try {
+    if (!_isSyncing) {
+      _isSyncing = true;
+      if (await DataConnectionChecker().hasConnection) {
+        if (connection == null) await connectdb();
         await _syncLocalToRemoteTxns(txnProvider, repo);
-      } catch (e) {
-        print('_syncLocalToRemoteTxns');
-        print(e);
-      }
-      if (connection == null) connectdb();
-      try {
+        if (connection == null) connectdb();
         await _fetchRecords(txnProvider);
-      } catch (e) {
-        print('_fetchRecords');
-        print(e);
-      }
-      try {
         var syncData = await repo.syncData();
         _isSyncing = false;
         return syncData;
-      } catch (e) {
-        print('syncData');
-        print(e);
+      } else {
+        _isSyncing = false;
+        return false;
       }
     } else {
-      _isSyncing = false;
-      return false;
+      // return true;
     }
-  } else {
-    // return true;
+  } catch (e) {
+    print('syncData');
+    print(e);
   }
 }
 
