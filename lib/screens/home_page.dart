@@ -752,7 +752,7 @@ class _ReportFormBloc extends FormBloc<String, String> {
             .toList());
       },
     );
-    startDate = InputFieldBloc<DateTime, Object>(initialValue: DateTime(1900));
+    startDate = InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
     endDate = InputFieldBloc<DateTime, Object>(initialValue: DateTime.now());
     addFieldBlocs(
         fieldBlocs: [accountText, subAccountText, startDate, endDate]);
@@ -812,8 +812,8 @@ class _ReportFormBloc extends FormBloc<String, String> {
             .map((e) => e.subAccountHead.toUpperCase())
             .toList()
             .contains(subAccountText.value.toUpperCase())) {
-      subAccountText
-          .addError('Sub Account not found for Account: ${accountText.value.toUpperCase()}');
+      subAccountText.addError(
+          'Sub Account not found for Account: ${accountText.value.toUpperCase()}');
       isError = true;
     }
     if (isError)
@@ -846,25 +846,22 @@ class _ReportFormBloc extends FormBloc<String, String> {
         }
         sheet.insertRowIterables(headings, 0);
         var filteredTxns = txnProvider.allTxns.where((e) => !e.isDeleted).where(
-              (e) =>
-                  ((e.createdDTime.year == startDate.value.year &&
-                              e.createdDTime.month == startDate.value.month &&
-                              e.createdDTime.day == startDate.value.day ||
-                          e.createdDTime.isAfter(startDate.value)) ||
-                      (e.createdDTime.year == endDate.value.year &&
-                              e.createdDTime.month == endDate.value.month &&
-                              e.createdDTime.day == endDate.value.day ||
-                          e.createdDTime.isBefore(startDate.value))) &&
-                  ((accountText.value != null && accountText.value.isNotEmpty)
-                      ? e.accountHead.toUpperCase() ==
-                          accountText.value.toUpperCase()
-                      : true) &&
-                  ((subAccountText.value != null &&
-                          subAccountText.value.isNotEmpty)
-                      ? e.subAccountHead.toUpperCase() ==
-                          subAccountText.value.toUpperCase()
-                      : true),
-            );
+          (e) {
+            return (e.createdDTime
+                        .isAfter(startDate.value) &&
+                    e.createdDTime
+                        .isBefore(endDate.value.add(Duration(days: 1)))) &&
+                ((accountText.value != null && accountText.value.isNotEmpty)
+                    ? e.accountHead.toUpperCase() ==
+                        accountText.value.toUpperCase()
+                    : true) &&
+                ((subAccountText.value != null &&
+                        subAccountText.value.isNotEmpty)
+                    ? e.subAccountHead.toUpperCase() ==
+                        subAccountText.value.toUpperCase()
+                    : true);
+          },
+        );
         List<List<String>> reportList = filteredTxns
             .map((e) => [
                   DateFormat('dd-MM-yyyy  hh:mm a').format(e.createdDTime),
