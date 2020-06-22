@@ -89,7 +89,8 @@ class TransactionCard extends StatelessWidget {
                           style: TextStyle(
                               color: getTxnColor,
                               fontWeight: FontWeight.bold,
-                              fontSize: Platform.isWindows ? 25 : scaler.getWidth(3)),
+                              fontSize:
+                                  Platform.isWindows ? 25 : scaler.getWidth(3)),
                           children: [
                             TextSpan(
                                 text: txn.credit == null
@@ -98,7 +99,9 @@ class TransactionCard extends StatelessWidget {
                                 style: TextStyle(
                                     color: getTxnColor,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: Platform.isWindows ? 40 : scaler.getWidth(4))),
+                                    fontSize: Platform.isWindows
+                                        ? 40
+                                        : scaler.getWidth(4))),
                           ],
                         ),
                       ),
@@ -125,7 +128,9 @@ class TransactionCard extends StatelessWidget {
                               style: TextStyle(
                                   color: kTextLightColor,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: Platform.isWindows ? 18 : scaler.getWidth(2)),
+                                  fontSize: Platform.isWindows
+                                      ? 18
+                                      : scaler.getWidth(2)),
                               children: [
                                 TextSpan(
                                     text: Platform.isWindows ? '|' : '\n',
@@ -136,7 +141,9 @@ class TransactionCard extends StatelessWidget {
                                   style: TextStyle(
                                       color: kTextLightColor,
                                       fontWeight: FontWeight.w600,
-                                      fontSize: Platform.isWindows ? 16 : scaler.getWidth(1.9)),
+                                      fontSize: Platform.isWindows
+                                          ? 16
+                                          : scaler.getWidth(1.9)),
                                 ),
                                 TextSpan(text: '\n'),
                                 if (txn.desc.isNotEmpty)
@@ -145,20 +152,26 @@ class TransactionCard extends StatelessWidget {
                                       style: TextStyle(
                                           color: kTextLightColor,
                                           fontWeight: FontWeight.w600,
-                                          fontSize:
-                                              Platform.isWindows ? 15 : scaler.getWidth(1.8))),
+                                          fontSize: Platform.isWindows
+                                              ? 15
+                                              : scaler.getWidth(1.8))),
                                 if (txn.desc.isNotEmpty)
                                   TextSpan(
                                       text: txn.desc,
                                       style: TextStyle(
                                           color: kTextLightColor,
                                           fontWeight: FontWeight.w600,
-                                          fontSize:
-                                              Platform.isWindows ? 15 : scaler.getWidth(1.8))),
+                                          fontSize: Platform.isWindows
+                                              ? 15
+                                              : scaler.getWidth(1.8))),
                               ],
                             ),
                           ),
                         ),
+                        if (txn.desc.isNotEmpty)
+                          SizedBox(
+                            height: 10,
+                          ),
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: kDefaultPadding * 1.5, // 30 padding
@@ -173,7 +186,10 @@ class TransactionCard extends StatelessWidget {
                           ),
                           child: Text(
                             DateFormat.yMMMMd().format(txn.createdDTime),
-                            style: Theme.of(context).textTheme.button,
+                            style: Theme.of(context)
+                                .textTheme
+                                .button
+                                .copyWith(fontSize: scaler.getTextSize(7)),
                           ),
                         ),
                       ],

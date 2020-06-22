@@ -847,10 +847,12 @@ class _ReportFormBloc extends FormBloc<String, String> {
         sheet.insertRowIterables(headings, 0);
         var filteredTxns = txnProvider.allTxns.where((e) => !e.isDeleted).where(
           (e) {
-            return (e.createdDTime
-                        .isAfter(startDate.value) &&
-                    e.createdDTime
-                        .isBefore(endDate.value.add(Duration(days: 1)))) &&
+            var start = DateFormat('yy-MM-dd')
+                .parse(startDate.value.subtract(Duration(days: 1)).toString());
+            var end = DateFormat('yy-MM-dd')
+                .parse(endDate.value.add(Duration(days: 1)).toString());
+            return (e.createdDTime.isAfter(start) &&
+                    e.createdDTime.isBefore(end)) &&
                 ((accountText.value != null && accountText.value.isNotEmpty)
                     ? e.accountHead.toUpperCase() ==
                         accountText.value.toUpperCase()
