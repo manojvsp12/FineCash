@@ -114,7 +114,7 @@ class TransactionCard extends StatelessWidget {
                   left: 0,
                   child: SizedBox(
                     height: scaler.getHeight(10),
-                    width: scaler.getWidth(80),
+                    width: scaler.getWidth(50),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -123,6 +123,9 @@ class TransactionCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: kDefaultPadding),
                           child: RichText(
+                            maxLines: 4,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
                             text: TextSpan(
                               text: 'Account: ${txn.accountHead.toUpperCase()}',
                               style: TextStyle(
@@ -168,7 +171,7 @@ class TransactionCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (txn.desc.isNotEmpty)
+                        if (Platform.isAndroid && txn.desc.isNotEmpty)
                           SizedBox(
                             height: 10,
                           ),

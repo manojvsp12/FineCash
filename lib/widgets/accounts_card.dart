@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screen_scaler/flutter_screen_scaler.dart';
 
@@ -41,13 +42,13 @@ class AccountsCard extends StatelessWidget {
             SizedBox(
               height: scaler.getHeight(1),
             ),
-            FittedBox(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.headline6.copyWith(
-                      fontSize: scaler.getHeight(1),
-                    ),
-              ),
+            AutoSizeText(
+              title,
+              maxLines: 1,
+              minFontSize: 8,
+              style: Theme.of(context).textTheme.headline6.copyWith(
+                    fontSize: scaler.getHeight(1),
+                  ),
             ),
           ],
         ),

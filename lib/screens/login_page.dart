@@ -158,6 +158,7 @@ class _LoginPageState extends State<LoginPage> {
             child: GestureDetector(
               onTap: () => FocusScope.of(context).unfocus(),
               child: Stack(
+                alignment: AlignmentDirectional.center,
                 children: <Widget>[
                   Container(
                     height: double.infinity,
@@ -176,37 +177,34 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  Container(
-                    height: double.infinity,
+                  Center(
                     child: SingleChildScrollView(
                       physics: AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.symmetric(
                         horizontal: Platform.isWindows ? 400 : 40,
                         vertical: 120.0,
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 150),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Text(
-                              'Sign In',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'OpenSans',
-                                fontSize: 30.0,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            'Sign In',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'OpenSans',
+                              fontSize: 30.0,
+                              fontWeight: FontWeight.bold,
                             ),
-                            SizedBox(height: 30.0),
-                            _buildPhoneTF(),
-                            SizedBox(
-                              height: 30.0,
-                            ),
-                            _buildPasswordTF(),
-                            _buildLoginBtn(),
-                          ],
-                        ),
+                          ),
+                          SizedBox(height: 30.0),
+                          _buildPhoneTF(),
+                          SizedBox(
+                            height: 30.0,
+                          ),
+                          _buildPasswordTF(),
+                          _buildLoginBtn(),
+                        ],
                       ),
                     ),
                   )

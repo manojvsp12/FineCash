@@ -69,8 +69,9 @@ class FineCashRepository extends _$FineCashRepository {
   }
 
   Future clearDB() async {
-    await delete(transactions).go();
-    await delete(metaDatas).go();
+    for (var table in allTables) {
+      await delete(table).go();
+    }
     txns = [];
     return true;
   }
@@ -82,8 +83,8 @@ class FineCashRepository extends _$FineCashRepository {
             .firstWhere((e) => e.id == txn.id, orElse: () => null);
         var entry = TransactionsCompanion(
           id: Value(txn.id),
-          accountHead: Value(txn.accountHead),
-          subAccountHead: Value(txn.subAccountHead),
+          accountHead: Value(txn.accountHead.toUpperCase()),
+          subAccountHead: Value(txn.subAccountHead.toUpperCase()),
           createdDTime: Value(txn.createdDTime),
           credit: Value(txn.credit),
           debit: Value(txn.debit),
@@ -231,7 +232,7 @@ class FineCashRepository extends _$FineCashRepository {
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final file = File(p.join(await _localPath, 'db.sqlite'));
-    return VmDatabase(file, logStatements: false);
+    return VmDatabase(file, logStatements: true);
   });
 }
 

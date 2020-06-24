@@ -41,6 +41,18 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 call xcopy /y /d /q "sqlite3.dll" "%BUNDLE_DIR%"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
+:: Copy the msvcp140.dll DLL to the target location.
+call xcopy /y /d /q "msvcp140.dll" "%BUNDLE_DIR%"
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+:: Copy the vcruntime140.dll to the target location.
+call xcopy /y /d /q "vcruntime140.dll" "%BUNDLE_DIR%"
+if %errorlevel% neq 0 exit /b %errorlevel%
+
+:: Copy the vcruntime140_1.dll to the target location.
+call xcopy /y /d /q "vcruntime140_1.dll" "%BUNDLE_DIR%"
+if %errorlevel% neq 0 exit /b %errorlevel%
+
 :: Copy any Plugin DLLs to the target location.
 if exist "%PLUGIN_DIR%" (
   call xcopy /y /d /q "%PLUGIN_DIR%"*.dll "%BUNDLE_DIR%"

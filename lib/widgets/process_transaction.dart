@@ -120,7 +120,7 @@ class TransactionForm extends StatelessWidget {
                 focusNode: accountText,
                 nextFocusNode: subAccountText,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 10,
+                maxLength: 15,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -140,7 +140,7 @@ class TransactionForm extends StatelessWidget {
                 focusNode: subAccountText,
                 nextFocusNode: amount,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 10,
+                maxLength: 15,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -182,7 +182,8 @@ class TransactionForm extends StatelessWidget {
                 focusNode: descText,
                 nextFocusNode: submitBtn,
                 suggestionsAnimationDuration: const Duration(milliseconds: 0),
-                maxLength: 25,
+                maxLines: null,
+                maxLength: 160,
                 hideOnEmptySuggestions: true,
                 hideOnLoadingSuggestions: true,
                 showSuggestionsWhenIsEmpty: false,
@@ -269,7 +270,7 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
   void onSubmitting() async {
     var isError = false;
     try {
-        print(dateAndTime.value.isAfter(DateTime.now()));
+      print(dateAndTime.value.isAfter(DateTime.now()));
       if (dateAndTime.value.isAfter(DateTime.now())) {
         dateAndTime.addError('Date/Time cannot be in future.');
         isError = true;
@@ -296,8 +297,8 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
         if (txn == null)
           await repo.addTxn(TransactionsCompanion.insert(
             id: Uuid().v4(),
-            accountHead: accountText.value.trim(),
-            subAccountHead: moor.Value(subAccountText.value.trim()),
+            accountHead: accountText.value.trim().toUpperCase(),
+            subAccountHead: moor.Value(subAccountText.value.trim().toUpperCase()),
             credit: crOrDr.value.toString() == 'Credit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value.absent(),
@@ -315,8 +316,8 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
             id: txn.id,
             createdDTime: moor.Value(dateAndTime.value),
             updatedDTime: moor.Value(DateTime.now()),
-            accountHead: accountText.value.trim(),
-            subAccountHead: moor.Value(subAccountText.value.trim()),
+            accountHead: accountText.value.trim().toUpperCase(),
+            subAccountHead: moor.Value(subAccountText.value.trim().toUpperCase()),
             credit: crOrDr.value.toString() == 'Credit'
                 ? moor.Value(amount.valueToDouble)
                 : moor.Value(null),

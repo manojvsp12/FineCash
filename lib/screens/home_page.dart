@@ -347,9 +347,9 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             color: kPrimaryColor,
             icon: Icon(Icons.exit_to_app),
-            onPressed: () async {
+            onPressed: () {
+              repo.clearDB();
               widget.onLogout(context);
-              await repo.clearDB();
             },
           ),
         ],
@@ -605,83 +605,86 @@ class AccountSummaryPage extends StatelessWidget {
             builder: (context, scrollController) {
               final formBloc = BlocProvider.of<_ReportFormBloc>(context);
               return FormBlocListener<_ReportFormBloc, String, String>(
-                child: SingleChildScrollView(
+                child: Scrollbar(
                   controller: scrollController,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextFieldBlocBuilder(
-                        autofocus: Platform.isWindows ? true : false,
-                        focusNode: accountText,
-                        nextFocusNode: subAccountText,
-                        suggestionsAnimationDuration:
-                            const Duration(milliseconds: 0),
-                        maxLength: 10,
-                        hideOnEmptySuggestions: true,
-                        hideOnLoadingSuggestions: true,
-                        showSuggestionsWhenIsEmpty: false,
-                        clearTextIcon: Icon(Icons.clear),
-                        textFieldBloc: formBloc.accountText,
-                        decoration: InputDecoration(
-                          labelText: 'Account',
-                          helperText: 'Account Head Name',
-                          prefixIcon: Icon(Icons.text_fields),
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextFieldBlocBuilder(
+                          autofocus: Platform.isWindows ? true : false,
+                          focusNode: accountText,
+                          nextFocusNode: subAccountText,
+                          suggestionsAnimationDuration:
+                              const Duration(milliseconds: 0),
+                          maxLength: 10,
+                          hideOnEmptySuggestions: true,
+                          hideOnLoadingSuggestions: true,
+                          showSuggestionsWhenIsEmpty: false,
+                          clearTextIcon: Icon(Icons.clear),
+                          textFieldBloc: formBloc.accountText,
+                          decoration: InputDecoration(
+                            labelText: 'Account',
+                            helperText: 'Account Head Name',
+                            prefixIcon: Icon(Icons.text_fields),
+                          ),
                         ),
-                      ),
-                      TextFieldBlocBuilder(
-                        focusNode: subAccountText,
-                        suggestionsAnimationDuration:
-                            const Duration(milliseconds: 0),
-                        maxLength: 10,
-                        hideOnEmptySuggestions: true,
-                        hideOnLoadingSuggestions: true,
-                        showSuggestionsWhenIsEmpty: false,
-                        clearTextIcon: Icon(Icons.clear),
-                        textFieldBloc: formBloc.subAccountText,
-                        decoration: InputDecoration(
-                          labelText: 'Sub Account',
-                          helperText: 'Sub Account Name',
-                          prefixIcon: Icon(Icons.text_fields),
+                        TextFieldBlocBuilder(
+                          focusNode: subAccountText,
+                          suggestionsAnimationDuration:
+                              const Duration(milliseconds: 0),
+                          maxLength: 10,
+                          hideOnEmptySuggestions: true,
+                          hideOnLoadingSuggestions: true,
+                          showSuggestionsWhenIsEmpty: false,
+                          clearTextIcon: Icon(Icons.clear),
+                          textFieldBloc: formBloc.subAccountText,
+                          decoration: InputDecoration(
+                            labelText: 'Sub Account',
+                            helperText: 'Sub Account Name',
+                            prefixIcon: Icon(Icons.text_fields),
+                          ),
                         ),
-                      ),
-                      DateTimeFieldBlocBuilder(
-                        clearIcon: Icon(Icons.clear),
-                        dateTimeFieldBloc: formBloc.startDate,
-                        canSelectTime: false,
-                        format: DateFormat('dd-MM-yyyy'),
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(1900),
-                        lastDate: DateTime(2100),
-                        decoration: InputDecoration(
-                          labelText: 'Start Date',
-                          prefixIcon:
-                              Icon(Icons.date_range, color: Colors.blue),
-                          helperText: 'Report Start Date',
+                        DateTimeFieldBlocBuilder(
+                          clearIcon: Icon(Icons.clear),
+                          dateTimeFieldBloc: formBloc.startDate,
+                          canSelectTime: false,
+                          format: DateFormat('dd-MM-yyyy'),
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime(2100),
+                          decoration: InputDecoration(
+                            labelText: 'Start Date',
+                            prefixIcon:
+                                Icon(Icons.date_range, color: Colors.blue),
+                            helperText: 'Report Start Date',
+                          ),
                         ),
-                      ),
-                      DateTimeFieldBlocBuilder(
-                        clearIcon: Icon(Icons.clear),
-                        dateTimeFieldBloc: formBloc.endDate,
-                        canSelectTime: false,
-                        format: DateFormat('dd-MM-yyyy'),
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(1900),
-                        lastDate: DateTime(2100),
-                        decoration: InputDecoration(
-                          labelText: 'End Date',
-                          prefixIcon:
-                              Icon(Icons.date_range, color: Colors.blue),
-                          helperText: 'Report End Date',
+                        DateTimeFieldBlocBuilder(
+                          clearIcon: Icon(Icons.clear),
+                          dateTimeFieldBloc: formBloc.endDate,
+                          canSelectTime: false,
+                          format: DateFormat('dd-MM-yyyy'),
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime(2100),
+                          decoration: InputDecoration(
+                            labelText: 'End Date',
+                            prefixIcon:
+                                Icon(Icons.date_range, color: Colors.blue),
+                            helperText: 'Report End Date',
+                          ),
                         ),
-                      ),
-                      _buildReportBtn(formBloc.submit),
-                      Container(),
-                      Container(),
-                      Container(),
-                      Container(),
-                      Container(),
-                    ],
+                        _buildReportBtn(formBloc.submit),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                        Container(),
+                      ],
+                    ),
                   ),
                 ),
               );
